@@ -1,0 +1,13 @@
+{
+    "compile":false,
+    "params": {
+        "s": [1000, 10000],
+        "r": [1, 10],
+        "op": ["sqrt", "+"]
+    },
+    "default_params": {
+        "s": 10000,
+        "r": 1,
+        "op": "sqrt"
+    }
+}

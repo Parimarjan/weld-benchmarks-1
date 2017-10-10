@@ -1,0 +1,72 @@
+#!/usr/bin/env python
+
+import argparse
+import time
+from weldnumpy import weldarray
+import numpy as np
+
+UNARY_OPS = {}
+UNARY_OPS['sqrt'] = np.sqrt
+UNARY_OPS['exp'] = np.exp
+UNARY_OPS['log'] = np.log
+
+BINARY_OPS = {}
+BINARY_OPS['+'] = np.add
+BINARY_OPS['-'] = np.subtract
+BINARY_OPS['*'] = np.multiply
+BINARY_OPS['/'] = np.divide
+
+def unary_op(arr, reps, op, inplace):
+    op = UNARY_OPS[op]
+    for i in range(reps):
+        if inplace: arr = op(arr, out=arr)
+        else: arr = op(arr)
+    if isinstance(arr, weldarray):
+        arr = arr.evaluate()
+    return arr
+
+def binary_op(arr, arr2, reps, op, inplace):
+    op = BINARY_OPS[op]
+    for i in range(reps):
+        if inplace: arr = op(arr, arr2, out=arr)
+        else: arr = op(arr, arr2)
+    if isinstance(arr, weldarray):
+        arr = arr.evaluate()
+    return arr
+
+def run_op(args, inplace):
+    op = args.unaryop
+    np.random.seed(1)
+    arr = np.random.rand(args.size)
+    np.random.seed(2)
+    arr2 = np.random.rand(args.size)
+
+    inplace_text = ''
+    if inplace: inplace_text = 'Inplace'
+
+    start = time.time()
+    if op in UNARY_OPS: result = unary_op(arr, args.reps, op, inplace)
+    elif op in BINARY_OPS: result = binary_op(arr, arr2, args.reps, op, inplace)
+
+    if isinstance(result, weldarray):
+        print "Weld %s %s: %.4f (result=%.4f)" % (inplace_text, op, time.time() - start, result[0])
+    else: print "Numpy %s %s: %.4f (result=%.4f)" % (inplace_text, op, time.time() - start, result[0])
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description="give size of arrays used for blackscholes"
+    )
+    parser.add_argument('-s', "--size", type=int, required=True,
+                        help="Size of 1d arrays")
+    parser.add_argument('-r', "--reps", type=int, required=True,
+                        help="how many reps in the loop?")
+    parser.add_argument('-op', "--unaryop", type=str, required=True,
+                        help="Which unary op to use?")
+
+    args = parser.parse_args()
+    import numpy as np
+    run_op(args, False)
+    run_op(args, True)
+    import weldnumpy as np
+    run_op(args, False)
+    run_op(args, True)

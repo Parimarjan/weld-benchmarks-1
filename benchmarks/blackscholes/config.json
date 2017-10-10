@@ -1,0 +1,9 @@
+{
+    "compile":false,
+    "params": {
+        "s": [100, 1000]
+    },
+    "default_params": {
+        "s": 100
+    }
+}

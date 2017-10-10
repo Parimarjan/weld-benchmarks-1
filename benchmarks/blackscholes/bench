@@ -1,0 +1,97 @@
+#!/usr/bin/env python
+
+import argparse
+import time
+from weldnumpy import weldarray
+import scipy.special as ss
+
+invsqrt2 = 1.0 #0.707
+
+def get_data(size):
+    np.random.seed(1)
+    # random prices between 1 and 101
+    price = np.float32(np.random.rand(size) * np.float32(100.0))
+    # random prices between 0 and 101
+    strike = np.float32(np.random.rand(size) * np.float32(100.0))
+    # random maturity between 0 and 4
+    t = np.float32(np.float32(1.0) + np.random.rand(size) * np.float32(6.0))
+    # random rate between 0 and 1
+    rate = np.float32(np.float32(0.01) + np.random.rand(size))
+    # random volatility between 0 and 1
+    vol = np.float32(np.float32(0.01) + np.random.rand(size))
+
+    # TODO: would be nice if this could be avoided...
+    if isinstance(vol, weldarray):
+        price = price.evaluate()
+        strike = strike.evaluate()
+        t = t.evaluate()
+        rate = rate.evaluate()
+        vol = vol.evaluate()
+
+    return price, strike, t, rate, vol
+
+
+def blackscholes(price, strike, t, rate, vol):
+    '''
+    Implements the Black Scholes pricing model using NumPy and SciPy.
+    Based on the code given by Intel, but cleaned up.
+
+    The following links were used to define the constants c05 and c10:
+
+    http://codereview.stackexchange.com/questions/108533/fastest-possible-cython-for-black-scholes-algorithm
+    http://gosmej1977.blogspot.com/2013/02/black-and-scholes-formula.html
+    '''
+    c05 = 0.5
+    c10 = 0.0
+
+    rsig = rate + vol * vol * c05
+    vol_sqrt = vol * np.sqrt(t)
+
+    d1 = (np.log(price / strike) + rsig * t) / vol_sqrt
+    d2 = d1 - vol_sqrt
+
+    if isinstance(price, weldarray):
+        # weldarrays. weldnumpy supports erf directly
+        d1 = c05 + c05 * np.erf(d1 * invsqrt2)
+        d2 = c05 + c05 * np.erf(d2 * invsqrt2)
+    else:
+        # these are numpy arrays, so use scipy's erf function
+        d1 = c05 + c05 * ss.erf(d1 * invsqrt2)
+        d2 = c05 + c05 * ss.erf(d2 * invsqrt2)
+
+    e_rt = np.exp((-rate) * t)
+
+    call = price * d1 - e_rt * strike * d2
+    put = e_rt * strike * (c10 - d2) - price * (c10 - d1)
+
+    if isinstance(call, weldarray):
+        call = call.evaluate()
+        put = put.evaluate()
+
+    return call, put
+
+def run_blackscholes(args):
+    p, s, t, r, v = get_data(args.size)
+
+    start = time.time()
+    call, put = blackscholes(p, s, t, r, v)
+
+    if isinstance(call, weldarray):
+        print "Weld: %.4f (result=%.4f)" % (time.time() - start, call[0])
+    else:
+        print "Numpy: %.4f (result=%.4f)" % (time.time() - start, call[0])
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(
+        description="give size of arrays used for blackscholes"
+    )
+    parser.add_argument('-s', "--size", type=int, required=True,
+                        help="Size of 1d arrays")
+
+    args = parser.parse_args()
+
+    import numpy as np
+    run_blackscholes(args)
+    import weldnumpy as np
+    run_blackscholes(args)
