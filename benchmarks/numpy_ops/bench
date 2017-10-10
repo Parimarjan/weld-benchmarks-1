@@ -62,11 +62,11 @@ if __name__ == '__main__':
                         help="how many reps in the loop?")
     parser.add_argument('-op', "--unaryop", type=str, required=True,
                         help="Which unary op to use?")
+    parser.add_argument('-i', "--inplace", type=int, required=True,
+                        help="inplace op or not inplace")
 
     args = parser.parse_args()
     import numpy as np
-    run_op(args, False)
-    run_op(args, True)
+    run_op(args, args.inplace)
     import weldnumpy as np
-    run_op(args, False)
-    run_op(args, True)
+    run_op(args, args.inplace)
