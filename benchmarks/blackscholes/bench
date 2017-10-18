@@ -7,18 +7,18 @@ import scipy.special as ss
 
 invsqrt2 = 1.0 #0.707
 
-def get_data(size):
+def get_data(num_els):
     np.random.seed(1)
     # random prices between 1 and 101
-    price = np.float32(np.random.rand(size) * np.float32(100.0))
+    price = np.float32(np.random.rand(num_els) * np.float32(100.0))
     # random prices between 0 and 101
-    strike = np.float32(np.random.rand(size) * np.float32(100.0))
+    strike = np.float32(np.random.rand(num_els) * np.float32(100.0))
     # random maturity between 0 and 4
-    t = np.float32(np.float32(1.0) + np.random.rand(size) * np.float32(6.0))
+    t = np.float32(np.float32(1.0) + np.random.rand(num_els) * np.float32(6.0))
     # random rate between 0 and 1
-    rate = np.float32(np.float32(0.01) + np.random.rand(size))
+    rate = np.float32(np.float32(0.01) + np.random.rand(num_els))
     # random volatility between 0 and 1
-    vol = np.float32(np.float32(0.01) + np.random.rand(size))
+    vol = np.float32(np.float32(0.01) + np.random.rand(num_els))
 
     # TODO: would be nice if this could be avoided...
     if isinstance(vol, weldarray):
@@ -31,7 +31,7 @@ def get_data(size):
     return price, strike, t, rate, vol
 
 
-def blackscholes(price, strike, t, rate, vol):
+def blackscholes(price, strike, t, rate, vol, int_eval):
     '''
     Implements the Black Scholes pricing model using NumPy and SciPy.
     Based on the code given by Intel, but cleaned up.
@@ -61,6 +61,13 @@ def blackscholes(price, strike, t, rate, vol):
 
     e_rt = np.exp((-rate) * t)
 
+    if isinstance(price, weldarray) and int_eval:
+        price = price.evaluate()
+        d1 = d1.evaluate()
+        d2 = d2.evaluate()
+        e_rt = e_rt.evaluate()
+        strike = strike.evaluate()
+
     call = price * d1 - e_rt * strike * d2
     put = e_rt * strike * (c10 - d2) - price * (c10 - d1)
 
@@ -71,10 +78,10 @@ def blackscholes(price, strike, t, rate, vol):
     return call, put
 
 def run_blackscholes(args):
-    p, s, t, r, v = get_data(args.size)
+    p, s, t, r, v = get_data(args.num_els)
 
     start = time.time()
-    call, put = blackscholes(p, s, t, r, v)
+    call, put = blackscholes(p, s, t, r, v, args.int_eval)
 
     if isinstance(call, weldarray):
         print "Weld: %.4f (result=%.4f)" % (time.time() - start, call[0])
@@ -84,11 +91,12 @@ def run_blackscholes(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="give size of arrays used for blackscholes"
+        description="give num_els of arrays used for blackscholes"
     )
-    parser.add_argument('-s', "--size", type=int, required=True,
-                        help="Size of 1d arrays")
-
+    parser.add_argument('-n', "--num_els", type=int, required=True,
+                        help="num_els of 1d arrays")
+    parser.add_argument('-ie', "--int_eval", type=int, required=True,
+                        help="num_els of 1d arrays")
     args = parser.parse_args()
 
     import numpy as np

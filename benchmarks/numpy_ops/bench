@@ -30,16 +30,18 @@ def binary_op(arr, arr2, reps, op, inplace):
     for i in range(reps):
         if inplace: arr = op(arr, arr2, out=arr)
         else: arr = op(arr, arr2)
+
     if isinstance(arr, weldarray):
         arr = arr.evaluate()
+
     return arr
 
 def run_op(args, inplace):
     op = args.unaryop
     np.random.seed(1)
-    arr = np.random.rand(args.size)
+    arr = np.random.rand(args.num_els)
     np.random.seed(2)
-    arr2 = np.random.rand(args.size)
+    arr2 = np.random.rand(args.num_els)
 
     inplace_text = ''
     if inplace: inplace_text = 'Inplace'
@@ -56,7 +58,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="give size of arrays used for blackscholes"
     )
-    parser.add_argument('-s', "--size", type=int, required=True,
+    parser.add_argument('-n', "--num_els", type=int, required=True,
                         help="Size of 1d arrays")
     parser.add_argument('-r', "--reps", type=int, required=True,
                         help="how many reps in the loop?")
