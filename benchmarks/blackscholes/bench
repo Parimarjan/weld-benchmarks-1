@@ -4,21 +4,23 @@ import argparse
 import time
 from weldnumpy import weldarray
 import scipy.special as ss
+import grizzly.grizzly as gr
+from grizzly.lazy_op import LazyOpResult
 
 invsqrt2 = 1.0 #0.707
 
 def get_data(num_els):
     np.random.seed(1)
     # random prices between 1 and 101
-    price = np.float32(np.random.rand(num_els) * np.float32(100.0))
+    price = np.float64(np.random.rand(num_els) * np.float64(100.0))
     # random prices between 0 and 101
-    strike = np.float32(np.random.rand(num_els) * np.float32(100.0))
+    strike = np.float64(np.random.rand(num_els) * np.float64(100.0))
     # random maturity between 0 and 4
-    t = np.float32(np.float32(1.0) + np.random.rand(num_els) * np.float32(6.0))
+    t = np.float64(np.float64(1.0) + np.random.rand(num_els) * np.float64(6.0))
     # random rate between 0 and 1
-    rate = np.float32(np.float32(0.01) + np.random.rand(num_els))
+    rate = np.float64(np.float64(0.01) + np.random.rand(num_els))
     # random volatility between 0 and 1
-    vol = np.float32(np.float32(0.01) + np.random.rand(num_els))
+    vol = np.float64(np.float64(0.01) + np.random.rand(num_els))
 
     # TODO: would be nice if this could be avoided...
     if isinstance(vol, weldarray):
@@ -27,11 +29,12 @@ def get_data(num_els):
         t = t.evaluate()
         rate = rate.evaluate()
         vol = vol.evaluate()
-
+    
+    print('***********Got Data*************')
     return price, strike, t, rate, vol
 
 
-def blackscholes(price, strike, t, rate, vol, int_eval):
+def blackscholes(price, strike, t, rate, vol, int_eval, use_group):
     '''
     Implements the Black Scholes pricing model using NumPy and SciPy.
     Based on the code given by Intel, but cleaned up.
@@ -41,8 +44,8 @@ def blackscholes(price, strike, t, rate, vol, int_eval):
     http://codereview.stackexchange.com/questions/108533/fastest-possible-cython-for-black-scholes-algorithm
     http://gosmej1977.blogspot.com/2013/02/black-and-scholes-formula.html
     '''
-    c05 = 0.5
-    c10 = 0.0
+    c05 = np.float64(0.5)
+    c10 = np.float64(0.0)
 
     rsig = rate + vol * vol * c05
     vol_sqrt = vol * np.sqrt(t)
@@ -52,14 +55,18 @@ def blackscholes(price, strike, t, rate, vol, int_eval):
 
     if isinstance(price, weldarray):
         # weldarrays. weldnumpy supports erf directly
-        d1 = c05 + c05 * np.erf(d1 * invsqrt2)
-        d2 = c05 + c05 * np.erf(d2 * invsqrt2)
+        # d1 = c05 + c05 * np.erf(d1 * invsqrt2)
+        # d2 = c05 + c05 * np.erf(d2 * invsqrt2)
+        d1 = c05 + c05 * wn.erf(d1 * invsqrt2)
+        d2 = c05 + c05 * wn.erf(d2 * invsqrt2)
     else:
         # these are numpy arrays, so use scipy's erf function
         d1 = c05 + c05 * ss.erf(d1 * invsqrt2)
         d2 = c05 + c05 * ss.erf(d2 * invsqrt2)
-
-    e_rt = np.exp((-rate) * t)
+    
+    # TODO: support negate
+    # e_rt = np.exp((-rate) * t)
+    e_rt = np.exp((rate) * t)
 
     if isinstance(price, weldarray) and int_eval:
         price = price.evaluate()
@@ -71,23 +78,50 @@ def blackscholes(price, strike, t, rate, vol, int_eval):
     call = price * d1 - e_rt * strike * d2
     put = e_rt * strike * (c10 - d2) - price * (c10 - d1)
 
-    if isinstance(call, weldarray):
-        call = call.evaluate()
-        put = put.evaluate()
+    if isinstance(call, weldarray) and use_group:
+        print('going to use group!!!!')
+        lazy_ops = generate_lazy_op_list([call, put])
+        # lazy_ops = generate_lazy_op_list([price, d1, d2, e_rt, strike, call, put])
+        outputs = gr.group(lazy_ops).evaluate(True)
 
+        call = outputs[0]
+        put = outputs[1]
+        # call = outputs[5]
+        # put = outputs[6]
+
+    if isinstance(call, weldarray) and not use_group:
+        call = call.evaluate()
+        # FIXME: temporary.
+        put = put.evaluate()
+    
     return call, put
 
-def run_blackscholes(args):
+def generate_lazy_op_list(arrays):
+    ret = []
+    for a in arrays:
+        lazy_arr = LazyOpResult(a.weldobj, a._weld_type, 1)
+        ret.append(lazy_arr)
+    return ret
+
+def run_blackscholes(args, use_weld):
     p, s, t, r, v = get_data(args.num_els)
+    
+    if use_weld:
+        p = weldarray(p)
+        s = weldarray(s)
+        t = weldarray(t)
+        r = weldarray(r)
+        v = weldarray(v)
 
     start = time.time()
-    call, put = blackscholes(p, s, t, r, v, args.int_eval)
+    call, put = blackscholes(p, s, t, r, v, args.int_eval, args.use_group)
 
     if isinstance(call, weldarray):
         print "Weld: %.4f (result=%.4f)" % (time.time() - start, call[0])
     else:
         print "Numpy: %.4f (result=%.4f)" % (time.time() - start, call[0])
 
+    return call, put
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -97,9 +131,38 @@ if __name__ == '__main__':
                         help="num_els of 1d arrays")
     parser.add_argument('-ie', "--int_eval", type=int, required=True,
                         help="num_els of 1d arrays")
+    parser.add_argument('-g', "--use_group", type=int, 
+                        default=1, help="num_els of 1d arrays")
+
     args = parser.parse_args()
 
     import numpy as np
-    run_blackscholes(args)
-    import weldnumpy as np
-    run_blackscholes(args)
+    import weldnumpy as wn
+    call, put = run_blackscholes(args, False)
+    print("*********Finished Numpy**********")
+    call2, put2 = run_blackscholes(args, True)
+    
+    # print('call[0]: ', call[0])
+    # print('call2[0]: ', call2[0])
+
+    # print('call[5]: ', call[5])
+    # print('call2[5]: ', call2[5])
+
+    # print('call[10]: ', call[10])
+    # print('call2[10]: ', call2[10])
+    
+    # print('norm: ', np.linalg.norm(call-call2))
+    # mistakes_call = 0
+    # mistakes_put = 0
+    # for i in range(len(call)):
+        # if call[i] != call2[i]:
+            # mistakes_call += 1
+        # if put[i] != put2[i]:
+            # mistakes_put += 1
+
+    # print('mistakes in call = ', mistakes_call / float(len(call)))
+    # print('mistakes in put = ', mistakes_put / float(len(call)))
+
+    print("close put, put2: ", np.allclose(put, put2))
+    print("close call1, call2: ", np.allclose(call, call2))
+
