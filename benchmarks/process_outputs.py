@@ -102,7 +102,7 @@ params = ''
 to_process = []
 for f in os.listdir(args.dir):
     print(f)
-    if args.file in f and 'csv' not in f and '.py' not in f:
+    if args.file in f and '.txt' in f:
         print f
         full_f = os.path.join(args.dir, f)
         to_process.append(full_f)
@@ -136,4 +136,10 @@ for i in range(len(compiles) - 1):
 insert_header(header)
 insert_row('numpy', numpys)
 insert_row('compile', compiles)
+insert_row('python->weld', encodes)
+insert_row('weld->python', decodes)
+insert_row('weld', welds)
+insert_row('offloaded to numpy',numpy_offloads)
+insert_row('weld end to end', weld_totals)
+
 

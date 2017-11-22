@@ -14,7 +14,7 @@ from grizzly.lazy_op import LazyOpResult
 
 # In[52]:
 
-df = pd.read_csv('new_york_hotels.csv', encoding='cp1252')
+df = pd.read_csv('data', encoding='cp1252')
 # df.head()
 
 
