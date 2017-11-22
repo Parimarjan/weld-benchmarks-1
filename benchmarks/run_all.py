@@ -21,7 +21,7 @@ def run_cmd(orig_cmd, name):
 
 def run_blackscholes(n, p, name):
     os.chdir('blackscholes')
-    f = 'blackscholes/bench'
+    f = 'bench'
     args = '-n {n} -ie 0 -g 1 -p {p}'.format(n=n, p=p)
     cmd = 'python {file} {args}'.format(file=f, args=args)
     cmd = cmd.split()
