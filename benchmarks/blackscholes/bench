@@ -79,18 +79,14 @@ def blackscholes(price, strike, t, rate, vol, int_eval, use_group):
     put = e_rt * strike * (c10 - d2) - price * (c10 - d1)
 
     if isinstance(call, weldarray) and use_group:
-        print('going to use group!!!!')
         lazy_ops = generate_lazy_op_list([call, put])
         outputs = gr.group(lazy_ops).evaluate(True, passes=wn.CUR_PASSES)
 
-        call = outputs[0]
-        put = outputs[1]
-        # call = outputs[5]
-        # put = outputs[6]
+        call = weldarray(outputs[0])
+        put = weldarray(outputs[1])
 
     if isinstance(call, weldarray) and not use_group:
         call = call.evaluate()
-        # FIXME: temporary.
         put = put.evaluate()
     
     return call, put
@@ -116,11 +112,15 @@ def run_blackscholes(args, use_weld):
     call, put = blackscholes(p, s, t, r, v, args.int_eval, args.use_group)
 
     if isinstance(call, weldarray):
-        print "Weld: %.4f (result=%.4f)" % (time.time() - start, call[0])
+        print "weld took: %.4f (result=%.4f)" % (time.time() - start, call[0])
     else:
-        print "Numpy: %.4f (result=%.4f)" % (time.time() - start, call[0])
+        print "numpy took: %.4f (result=%.4f)" % (time.time() - start, call[0])
 
     return call, put
+
+def print_args(args):
+    d = vars(args)
+    print('params: ', str(d))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -136,6 +136,7 @@ if __name__ == '__main__':
                         default="whatever_string", help="will remove the pass containing this str")
 
     args = parser.parse_args()
+    print_args(args)
 
     import numpy as np
     import weldnumpy as wn
@@ -144,28 +145,7 @@ if __name__ == '__main__':
     wn.remove_pass(args.remove_pass)
     print(wn.CUR_PASSES)
     call2, put2 = run_blackscholes(args, True)
-    
-    # print('call[0]: ', call[0])
-    # print('call2[0]: ', call2[0])
-
-    # print('call[5]: ', call[5])
-    # print('call2[5]: ', call2[5])
-
-    # print('call[10]: ', call[10])
-    # print('call2[10]: ', call2[10])
-    
-    # print('norm: ', np.linalg.norm(call-call2))
-    # mistakes_call = 0
-    # mistakes_put = 0
-    # for i in range(len(call)):
-        # if call[i] != call2[i]:
-            # mistakes_call += 1
-        # if put[i] != put2[i]:
-            # mistakes_put += 1
-
-    # print('mistakes in call = ', mistakes_call / float(len(call)))
-    # print('mistakes in put = ', mistakes_put / float(len(call)))
-
+    print('END!')   # So we can stop computing weld timings and stuff
     print("close put, put2: ", np.allclose(put, put2))
     print("close call1, call2: ", np.allclose(call, call2))
 
