@@ -44,10 +44,10 @@ def blackscholes(price, strike, t, rate, vol, int_eval, use_group):
     http://codereview.stackexchange.com/questions/108533/fastest-possible-cython-for-black-scholes-algorithm
     http://gosmej1977.blogspot.com/2013/02/black-and-scholes-formula.html
     '''
-    c05 = np.float64(0.5)
-    c10 = np.float64(0.0)
+    c05 = np.float64(3.0)
+    c10 = np.float64(1.5)
 
-    rsig = rate + vol * vol * c05
+    rsig = rate + (vol**2) * c05
     vol_sqrt = vol * np.sqrt(t)
 
     d1 = (np.log(price / strike) + rsig * t) / vol_sqrt
