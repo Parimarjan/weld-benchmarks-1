@@ -81,8 +81,7 @@ def blackscholes(price, strike, t, rate, vol, int_eval, use_group):
     if isinstance(call, weldarray) and use_group:
         print('going to use group!!!!')
         lazy_ops = generate_lazy_op_list([call, put])
-        # lazy_ops = generate_lazy_op_list([price, d1, d2, e_rt, strike, call, put])
-        outputs = gr.group(lazy_ops).evaluate(True)
+        outputs = gr.group(lazy_ops).evaluate(True, passes=wn.CUR_PASSES)
 
         call = outputs[0]
         put = outputs[1]
@@ -142,8 +141,7 @@ if __name__ == '__main__':
     import weldnumpy as wn
     call, put = run_blackscholes(args, False)
     print("*********Finished Numpy**********")
-    wn.remove_pass("fusion")
-    wn.remove_pass("vector")
+    wn.remove_pass(args.remove_pass)
     print(wn.CUR_PASSES)
     call2, put2 = run_blackscholes(args, True)
     
