@@ -176,6 +176,10 @@ def compare(R, R2):
 
     assert np.allclose(R, R2)
 
+def print_args(args):
+    d = vars(args)
+    print('params: ', str(d))
+
 def main():
 
     parser = argparse.ArgumentParser(
@@ -185,6 +189,9 @@ def main():
                         help="num_els of 1d arrays")
     parser.add_argument('-t', "--num_times", type=int, required=True,
                         help="num iterations for loop")
+    parser.add_argument('-p', "--remove_pass", type=str, 
+                        default="whatever_string", help="will remove the pass containing this str")
+
     args = parser.parse_args()
 
     galaxy = random_galaxy(args.num_els)
@@ -197,6 +204,8 @@ def main():
     print('numpy took {} seconds'.format(end-start))
     
     # Part 2: Weld.
+    wn.remove_pass(args.remove_pass)
+    print(wn.CUR_PASSES)
     galaxy2 = random_galaxy(args.num_els)
     for k, v in galaxy2.iteritems():
         galaxy2[k] = weldarray(v)
@@ -207,7 +216,7 @@ def main():
     if isinstance(R2, weldarray):
         R2 = R2.evaluate()
     end = time.time()
-    print('weldnumpy took {} seconds'.format(end-start)) 
+    print('weld took {} seconds'.format(end-start)) 
     
     compare(ret1, ret2)
     compare(R, R2)

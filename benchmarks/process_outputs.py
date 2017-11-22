@@ -102,7 +102,7 @@ params = ''
 to_process = []
 for f in os.listdir(args.dir):
     print(f)
-    if args.file in f and 'csv' not in f:
+    if args.file in f and 'csv' not in f and '.py' not in f:
         print f
         full_f = os.path.join(args.dir, f)
         to_process.append(full_f)

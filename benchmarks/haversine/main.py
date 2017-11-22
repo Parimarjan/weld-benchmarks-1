@@ -3,6 +3,7 @@ import numpy as np
 from math import *
 import time
 from weldnumpy import weldarray
+import weldnumpy as wn
 import argparse
 
 # for group 
@@ -111,6 +112,9 @@ def compare(R, R2):
     assert np.allclose(R, R2)
     # assert np.array_equal(R, R2)
 
+def print_args(args):
+    d = vars(args)
+    print('params: ', str(d))
 
 def run_haversine_with_scalar(args):
     orig_lat = df['latitude'].values
@@ -122,7 +126,7 @@ def run_haversine_with_scalar(args):
     start = time.time()
     dist1 = haversine(40.671, -73.985, lat, lon)
     end = time.time()
-    print('numpy haversine stuff took {} seconds'.format(end-start))
+    print('numpy took {} seconds'.format(end-start))
 
     ####### Weld stuff ############
     lat2, lon2 = gen_data(orig_lat, orig_lon, scale=args.scale)
@@ -142,11 +146,9 @@ def run_haversine_with_scalar(args):
         dist2 = dist2.evaluate()
 
     end = time.time()
-    print('weldnumpy haversine stuff took {} seconds'.format(end-start))
-    
+    print('weld took {} seconds'.format(end-start))
+    print('END') 
     compare(dist1, dist2)
-    # assert np.allclose(dist1, dist2)
-    # assert np.array_equal(dist1, dist2)
 
 parser = argparse.ArgumentParser(
     description="give num_els of arrays used for nbody"
@@ -155,7 +157,12 @@ parser.add_argument('-s', "--scale", type=int, required=True,
                     help="how much to scale up the orig dataset?")
 parser.add_argument('-g', "--use_group", type=int, default=0,
                     help="use group or not")
+parser.add_argument('-p', "--remove_pass", type=str, 
+                    default="whatever_string", help="will remove the pass containing this str")
 
 args = parser.parse_args()
+print_args(args)
+wn.remove_pass(args.remove_pass)
+print(wn.CUR_PASSES)
 
 run_haversine_with_scalar(args)
