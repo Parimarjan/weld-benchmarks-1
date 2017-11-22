@@ -133,6 +133,8 @@ if __name__ == '__main__':
                         help="num_els of 1d arrays")
     parser.add_argument('-g', "--use_group", type=int, 
                         default=1, help="num_els of 1d arrays")
+    parser.add_argument('-p', "--remove_pass", type=str, 
+                        default="whatever_string", help="will remove the pass containing this str")
 
     args = parser.parse_args()
 
@@ -140,6 +142,9 @@ if __name__ == '__main__':
     import weldnumpy as wn
     call, put = run_blackscholes(args, False)
     print("*********Finished Numpy**********")
+    wn.remove_pass("fusion")
+    wn.remove_pass("vector")
+    print(wn.CUR_PASSES)
     call2, put2 = run_blackscholes(args, True)
     
     # print('call[0]: ', call[0])
