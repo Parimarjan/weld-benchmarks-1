@@ -7,6 +7,8 @@ import weldnumpy as wn
 import argparse
 import csv
 import ast
+import json
+import pandas as pd
 
 # for group 
 import grizzly.grizzly as gr
@@ -16,7 +18,7 @@ from grizzly.lazy_op import LazyOpResult
 
 # In[52]:
 
-# df = pd.read_csv('data', encoding='cp1252')
+df = pd.read_csv('data', encoding='cp1252')
 # df.head()
 
 
@@ -70,15 +72,12 @@ def gen_data(lat, lon, scale=10):
         l2 = lon[index]
         new_lat.append(l1 + np.random.rand())
         new_lon.append(l2 + np.random.rand())
-    
-    name = 'generated_data.csv'
-    writer = csv.writer(open(name, 'wb'))
-    # new_lat.insert(0, 'latitude')
-    # new_lon.insert(0, 'longitude')
-    writer.writerow(new_lat)
-    writer.writerow(new_lon)
-    print('done writing file!')
-    exit(0)
+
+    # with open('lats.json', 'w') as fp:
+        # json.dump(new_lat, fp) 
+    # with open('lons.json', 'w') as fp:
+        # json.dump(new_lon, fp) 
+
     return np.array(new_lat), np.array(new_lon)
 
 def gen_data2(lat, lon, scale=10):
@@ -126,23 +125,26 @@ def print_args(args):
     d = vars(args)
     print('params: ', str(d))
 
-def read_data(name):
-    data = []
-    with open(name, "rb") as f:
-        reader = csv.reader(f, delimiter="\t")
-        for i, line in enumerate(reader):
-            x = line[0].split(',')
-            x = [np.float64(l) for l in x]
-            data.append(x)
+def read_data():
+    # data = []
+    # with open(name, "rb") as f:
+        # reader = csv.reader(f, delimiter="\t")
+        # for i, line in enumerate(reader):
+            # x = line[0].split(',')
+            # x = [np.float64(l) for l in x]
+            # data.append(x)
 
-    return data[0], data[1]
+    return json.load(open('lats.json')), json.load(open('lons.json'))
 
 def run_haversine_with_scalar(args):
-    # orig_lat = df['latitude'].values
-    # orig_lon = df['longitude'].values
+    orig_lat = df['latitude'].values
+    orig_lon = df['longitude'].values
     ########### Numpy stuff ############
     # lat, lon = gen_data(orig_lat, orig_lon, scale=args.scale)
-    lat, lon = read_data('generated_data.csv')
+    lat, lon = read_data()
+    print(len(lat))
+    print(len(lon))
+    exit(0)
 
     start = time.time()
     dist1 = haversine(40.671, -73.985, lat, lon)
