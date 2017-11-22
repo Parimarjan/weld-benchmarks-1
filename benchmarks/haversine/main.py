@@ -1,10 +1,12 @@
-import pandas as pd
+# import pandas as pd
 import numpy as np
 from math import *
 import time
 from weldnumpy import weldarray
 import weldnumpy as wn
 import argparse
+import csv
+import ast
 
 # for group 
 import grizzly.grizzly as gr
@@ -14,7 +16,7 @@ from grizzly.lazy_op import LazyOpResult
 
 # In[52]:
 
-df = pd.read_csv('data', encoding='cp1252')
+# df = pd.read_csv('data', encoding='cp1252')
 # df.head()
 
 
@@ -69,6 +71,14 @@ def gen_data(lat, lon, scale=10):
         new_lat.append(l1 + np.random.rand())
         new_lon.append(l2 + np.random.rand())
     
+    name = 'generated_data.csv'
+    writer = csv.writer(open(name, 'wb'))
+    # new_lat.insert(0, 'latitude')
+    # new_lon.insert(0, 'longitude')
+    writer.writerow(new_lat)
+    writer.writerow(new_lon)
+    print('done writing file!')
+    exit(0)
     return np.array(new_lat), np.array(new_lon)
 
 def gen_data2(lat, lon, scale=10):
@@ -116,13 +126,24 @@ def print_args(args):
     d = vars(args)
     print('params: ', str(d))
 
-def run_haversine_with_scalar(args):
-    orig_lat = df['latitude'].values
-    orig_lon = df['longitude'].values
-    print('orig shape: ', orig_lat.shape)
+def read_data(name):
+    data = []
+    with open(name, "rb") as f:
+        reader = csv.reader(f, delimiter="\t")
+        for i, line in enumerate(reader):
+            x = line[0].split(',')
+            x = [np.float64(l) for l in x]
+            data.append(x)
 
+    return data[0], data[1]
+
+def run_haversine_with_scalar(args):
+    # orig_lat = df['latitude'].values
+    # orig_lon = df['longitude'].values
     ########### Numpy stuff ############
-    lat, lon = gen_data(orig_lat, orig_lon, scale=args.scale)
+    # lat, lon = gen_data(orig_lat, orig_lon, scale=args.scale)
+    lat, lon = read_data('generated_data.csv')
+
     start = time.time()
     dist1 = haversine(40.671, -73.985, lat, lon)
     end = time.time()
