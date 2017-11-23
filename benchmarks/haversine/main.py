@@ -72,7 +72,8 @@ def gen_data(lat, lon, scale=10):
         l2 = lon[index]
         new_lat.append(l1 + np.random.rand())
         new_lon.append(l2 + np.random.rand())
-
+    
+    # TODO: fix this.
     # with open('lats.json', 'w') as fp:
         # json.dump(new_lat, fp) 
     # with open('lons.json', 'w') as fp:
@@ -104,20 +105,6 @@ def compare(R, R2):
     
     assert R.dtype == R2.dtype, 'dtypes must match!'
     
-    # this loop takes ages to run so just avoiding it.
-    # for i, r in enumerate(R):
-        # if not np.isclose(R[i], R2[i]):
-        # if we use exact match, then sometimes things seem to be different many decimal places
-        # down...
-        # if R[i] != R2[i]:
-            # mistakes += 1
-            # print('R[i] : ', R[i])
-            # print('R2[i]: ', R2[i]) 
-    # if mistakes != 0:
-        # print('mistakes % = ', mistakes / float(len(R)))
-    # else:
-        # print('mistakes = 0')
-    
     assert np.allclose(R, R2)
     # assert np.array_equal(R, R2)
 
@@ -140,11 +127,10 @@ def run_haversine_with_scalar(args):
     orig_lat = df['latitude'].values
     orig_lon = df['longitude'].values
     ########### Numpy stuff ############
-    # lat, lon = gen_data(orig_lat, orig_lon, scale=args.scale)
-    lat, lon = read_data()
+    lat, lon = gen_data(orig_lat, orig_lon, scale=args.scale)
+    # lat, lon = read_data()
     print(len(lat))
     print(len(lon))
-    exit(0)
 
     start = time.time()
     dist1 = haversine(40.671, -73.985, lat, lon)
@@ -164,7 +150,7 @@ def run_haversine_with_scalar(args):
     if args.use_group:
         print('going to use group!!!!')
         lazy_ops = generate_lazy_op_list([dist2])
-        dist2 = gr.group(lazy_ops).evaluate(True)[0]
+        dist2 = gr.group(lazy_ops).evaluate(True, passes=wn.CUR_PASSES)[0]
     else:
         dist2 = dist2.evaluate()
 
