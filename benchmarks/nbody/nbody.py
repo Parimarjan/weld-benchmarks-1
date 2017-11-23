@@ -100,12 +100,13 @@ def move(galaxy, dt):
 
     diagonal(r)[:] = 1.0
     
-    if isinstance(r, weldarray):
+    if False:
         #stupid hack because cmp ops behave differently in numpy --> returns boolean arrays, and
         # multiplying that with f64's would not work for us.
         mask = r._cmp_op(1.0, np.less.__name__)
         not_mask = r._cmp_op(1.0, np.greater_equal.__name__)
     else:
+	print('using numpy version for mask!')
         # numpy version
         mask = r < 1.0
         not_mask = r >= 1.0
@@ -199,7 +200,9 @@ def main():
     R = galaxy['x'] + galaxy['y'] + galaxy['z']
     # assert R.dtype == np.float32, 'should be float64'
     end = time.time()
+    print('****************************')
     print('numpy took {} seconds'.format(end-start))
+    print('****************************')
     
     # Part 2: Weld.
     wn.remove_pass(args.remove_pass)
@@ -214,7 +217,9 @@ def main():
     if isinstance(R2, weldarray):
         R2 = R2.evaluate()
     end = time.time()
+    print('****************************')
     print('weld took {} seconds'.format(end-start)) 
+    print('****************************')
     
     compare(ret1, ret2)
     compare(R, R2)
