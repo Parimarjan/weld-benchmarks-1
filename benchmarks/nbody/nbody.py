@@ -196,6 +196,7 @@ def main():
                         help="use weld or not in this run")
 
     args = parser.parse_args()
+    print_args(args)
     
     if args.use_numpy:
         galaxy = random_galaxy(args.num_els)

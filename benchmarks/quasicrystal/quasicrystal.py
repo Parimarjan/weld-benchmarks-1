@@ -102,6 +102,10 @@ def run(args, use_weld):
         print('*****************************')
     return image
 
+def print_args(args):
+    d = vars(args)
+    print('params: ', str(d))
+
 def main():
     parser = argparse.ArgumentParser(
         description="give num_els of arrays used for nbody"
@@ -118,8 +122,11 @@ def main():
                         help="use numpy or not in this run")
     parser.add_argument('-weld', "--use_weld", type=int, required=False, default=0,
                         help="use weld or not in this run")
+    parser.add_argument('-p', "--remove_pass", type=str, 
+                        default="whatever_string", help="will remove the pass containing this str")
 
     args = parser.parse_args()
+    print_args(args)
     
     if args.use_numpy:
         img1 = run(args, False)
@@ -127,8 +134,11 @@ def main():
         print('Not running numpy')
 
     if args.use_weld:
+        wn.remove_pass(args.remove_pass)
+        print('Passes: ', wn.CUR_PASSES)
         img2 = run(args, True)
         img2 = img2.evaluate()
+        print('END!')
     else:
         print('Not running weld')
     
