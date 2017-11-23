@@ -33,6 +33,10 @@ def process_file(f):
                 break 
             if 'param' in line:
                 params = line
+            # Printing out threads from weldobj right now.
+            if 'threads' in line and time:
+                if 'Threads' not in params:
+                    params += ' Threads: ' + str(time)
             elif 'weld took' in line and time:
                 assert weld_total == 0
                 weld_total = time
@@ -125,7 +129,7 @@ weld_totals.insert(0, float(sum(weld_totals)) / len(weld_totals))
 # CSV dump time!
 name = args.file + '.csv'
 file_name = os.path.join(args.dir, name)
-dumpster = csv.writer(open(file_name,'wb'))
+dumpster = csv.writer(open(file_name,'a'))
 
 # Let's output this to a csv!
 header = ['Benchmark', 'Scheme', 'Paramaters', 'Mean']
@@ -141,5 +145,3 @@ insert_row('weld->python', decodes)
 insert_row('weld', welds)
 insert_row('offloaded to numpy',numpy_offloads)
 insert_row('weld end to end', weld_totals)
-
-
