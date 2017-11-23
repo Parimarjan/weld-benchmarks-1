@@ -9,6 +9,7 @@ import csv
 import ast
 import json
 import pandas as pd
+import os
 
 # for group 
 import grizzly.grizzly as gr
@@ -19,6 +20,8 @@ from grizzly.lazy_op import LazyOpResult
 # In[52]:
 
 df = pd.read_csv('data', encoding='cp1252')
+LATS_NAME = 'lats'
+LONS_NAME = 'lons'
 
 # ## Haversine definition
 def haversine(lat1, lon1, lat2, lon2):
@@ -31,6 +34,10 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2.0 * np.arcsin(np.sqrt(a)) 
     mi = miles_constant * c
     return mi
+
+def write_to_file(arr, name):
+    # f = open(name, 'w')
+    arr.tofile(name)
 
 def gen_data(lat, lon, scale=10):
     '''
@@ -45,14 +52,13 @@ def gen_data(lat, lon, scale=10):
         l2 = lon[index]
         new_lat.append(l1 + np.random.rand())
         new_lon.append(l2 + np.random.rand())
-    
-    # TODO: fix this.
-    # with open('lats.json', 'w') as fp:
-        # json.dump(new_lat, fp) 
-    # with open('lons.json', 'w') as fp:
-        # json.dump(new_lon, fp) 
 
-    return np.array(new_lat), np.array(new_lon)
+    new_lat = np.array(new_lat)
+    new_lon = np.array(new_lon)
+    write_to_file(new_lat, LATS_NAME)
+    write_to_file(new_lon, LONS_NAME)
+
+    return new_lat, new_lon
 
 def gen_data2(lat, lon, scale=10):
     '''
@@ -86,15 +92,12 @@ def print_args(args):
     print('params: ', str(d))
 
 def read_data():
-    # data = []
-    # with open(name, "rb") as f:
-        # reader = csv.reader(f, delimiter="\t")
-        # for i, line in enumerate(reader):
-            # x = line[0].split(',')
-            # x = [np.float64(l) for l in x]
-            # data.append(x)
-
-    return json.load(open('lats.json')), json.load(open('lons.json'))
+    start = time.time()
+    new_lat = np.fromfile(LATS_NAME)
+    new_lon = np.fromfile(LONS_NAME)
+    end = time.time()
+    print('reading in data took ', end-start)
+    return new_lat, new_lon
 
 def run_haversine_with_scalar(args):
     orig_lat = df['latitude'].values
@@ -102,9 +105,12 @@ def run_haversine_with_scalar(args):
 
     if args.use_numpy:
         ########### Numpy stuff ############
-        lat, lon = gen_data(orig_lat, orig_lon, scale=args.scale)
-        # lat, lon = read_data()
+        if not os.path.isfile(LATS_NAME):
+            lat, lon = gen_data(orig_lat, orig_lon, scale=args.scale)
+        else:
+            lat, lon = read_data()
         print('num rows in lattitudes: ', len(lat))
+
         start = time.time()
         dist1 = haversine(40.671, -73.985, lat, lon)
         end = time.time()
@@ -113,11 +119,16 @@ def run_haversine_with_scalar(args):
         print('****************************')
     else:
         print('Not running numpy')
-    
+    # just in case let us free memory
+    del(lat) 
+    del(lon)
 
     if args.use_weld:
         ####### Weld stuff ############
-        lat2, lon2 = gen_data(orig_lat, orig_lon, scale=args.scale)
+        if not os.path.isfile(LATS_NAME):
+            lat2, lon2 = gen_data(orig_lat, orig_lon, scale=args.scale)
+        else:
+            lat2, lon2 = read_data()
         print('num rows in lattitudes: ', len(lat2))
         lat2 = weldarray(lat2)
         lon2 = weldarray(lon2)
