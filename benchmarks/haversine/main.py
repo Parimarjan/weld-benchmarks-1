@@ -19,33 +19,6 @@ from grizzly.lazy_op import LazyOpResult
 # In[52]:
 
 df = pd.read_csv('data', encoding='cp1252')
-# df.head()
-
-
-# # ## Benchmarking example
-
-# # #### Define the normalization function
-
-# # In[54]:
-
-# def normalize(df, pd_series):
-    # pd_series = pd_series.astype(float)
-
-    # # Find upper and lower bound for outliers
-    # avg = np.mean(pd_series)
-    # sd  = np.std(pd_series)
-    # lower_bound = avg - 2*sd
-    # upper_bound = avg + 2*sd
-
-    # # Collapse in the outliers
-    # df.loc[pd_series < lower_bound , "cutoff_rate" ] = lower_bound
-    # df.loc[pd_series > upper_bound , "cutoff_rate" ] = upper_bound
-
-    # # Finally, take the log
-    # normalized_price = np.log(df["cutoff_rate"].astype(float))
-    
-    # return normalized_price
-
 
 # ## Haversine definition
 def haversine(lat1, lon1, lat2, lon2):
@@ -126,38 +99,47 @@ def read_data():
 def run_haversine_with_scalar(args):
     orig_lat = df['latitude'].values
     orig_lon = df['longitude'].values
-    ########### Numpy stuff ############
-    lat, lon = gen_data(orig_lat, orig_lon, scale=args.scale)
-    # lat, lon = read_data()
-    print(len(lat))
-    print(len(lon))
 
-    start = time.time()
-    dist1 = haversine(40.671, -73.985, lat, lon)
-    end = time.time()
-    print('numpy took {} seconds'.format(end-start))
-
-    ####### Weld stuff ############
-    lat2, lon2 = gen_data(orig_lat, orig_lon, scale=args.scale)
-    lat2 = weldarray(lat2)
-    lon2 = weldarray(lon2)
-
-    # assert np.array_equal(lat, lat2)
-
-    start = time.time()
-    dist2 = haversine(40.671, -73.985, lat2, lon2)
-    
-    if args.use_group:
-        print('going to use group!!!!')
-        lazy_ops = generate_lazy_op_list([dist2])
-        dist2 = gr.group(lazy_ops).evaluate(True, passes=wn.CUR_PASSES)[0]
+    if args.use_numpy:
+        ########### Numpy stuff ############
+        lat, lon = gen_data(orig_lat, orig_lon, scale=args.scale)
+        # lat, lon = read_data()
+        print('num rows in lattitudes: ', len(lat))
+        start = time.time()
+        dist1 = haversine(40.671, -73.985, lat, lon)
+        end = time.time()
+        print('****************************')
+        print('numpy took {} seconds'.format(end-start))
+        print('****************************')
     else:
-        dist2 = dist2.evaluate()
+        print('Not running numpy')
+    
 
-    end = time.time()
-    print('weld took {} seconds'.format(end-start))
-    print('END') 
-    compare(dist1, dist2)
+    if args.use_weld:
+        ####### Weld stuff ############
+        lat2, lon2 = gen_data(orig_lat, orig_lon, scale=args.scale)
+        print('num rows in lattitudes: ', len(lat2))
+        lat2 = weldarray(lat2)
+        lon2 = weldarray(lon2)
+        start = time.time()
+        dist2 = haversine(40.671, -73.985, lat2, lon2) 
+        if args.use_group:
+            print('going to use group')
+            lazy_ops = generate_lazy_op_list([dist2])
+            dist2 = gr.group(lazy_ops).evaluate(True, passes=wn.CUR_PASSES)[0]
+        else:
+            dist2 = dist2.evaluate()
+
+        end = time.time()
+        print('****************************')
+        print('weld took {} seconds'.format(end-start))
+        print('****************************')
+        print('END')
+    else:
+        print('Not running weld')
+    
+    if args.use_numpy and args.use_weld:
+        compare(dist1, dist2)
 
 parser = argparse.ArgumentParser(
     description="give num_els of arrays used for nbody"
@@ -168,10 +150,13 @@ parser.add_argument('-g', "--use_group", type=int, default=0,
                     help="use group or not")
 parser.add_argument('-p', "--remove_pass", type=str, 
                     default="whatever_string", help="will remove the pass containing this str")
+parser.add_argument('-numpy', "--use_numpy", type=int, required=False, default=0,
+                    help="use numpy or not in this run")
+parser.add_argument('-weld', "--use_weld", type=int, required=False, default=0,
+                    help="use weld or not in this run")
 
 args = parser.parse_args()
 print_args(args)
 wn.remove_pass(args.remove_pass)
-print(wn.CUR_PASSES)
-
+print('Passes: ', wn.CUR_PASSES)
 run_haversine_with_scalar(args)

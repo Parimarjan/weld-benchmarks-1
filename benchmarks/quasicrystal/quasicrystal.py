@@ -36,6 +36,7 @@ def compare(R, R2):
 
 def run(args, use_weld):
     k = np.float64(args.k)
+    # TODO: Test timing from the start, but this just seems to be setup code.
     stripes = np.float64(args.stripes)
     N = args.n
     phases  = np.arange(0, 2*np.pi, 2*np.pi/args.times)
@@ -51,7 +52,7 @@ def run(args, use_weld):
         yv = weldarray(yv)
     
     start = time.time()
-    # TODO: FIXME!!!
+    # TODO: FIXME --> can we support this in weld? Right now it offloads it.
     theta  = np.arctan2(yv, xv)
 
     a = xv**2 + yv**2
@@ -91,7 +92,14 @@ def run(args, use_weld):
             image = image.evaluate()
     
     end = time.time()
-    print('total time = ', end-start)
+    if isinstance(image, weldarray):
+        print('*****************************')
+        print('weld took time = ', end-start)
+        print('*****************************')
+    else:
+        print('*****************************')
+        print('numpy took time = ', end-start)
+        print('*****************************')
     return image
 
 def main():
@@ -106,17 +114,28 @@ def main():
                         help="image size in pixels")
     parser.add_argument('-t', "--times", type=int, required=True,
                         help="number of iterations")
-    args = parser.parse_args()
+    parser.add_argument('-numpy', "--use_numpy", type=int, required=False, default=0,
+                        help="use numpy or not in this run")
+    parser.add_argument('-weld', "--use_weld", type=int, required=False, default=0,
+                        help="use weld or not in this run")
 
-    img1 = run(args, False)
-    img2 = run(args, True)
-    img2 = img2.evaluate()
+    args = parser.parse_args()
     
-    assert img1.shape == img2.shape
-    assert img1.strides == img2.strides
-    compare(img1, img2)
+    if args.use_numpy:
+        img1 = run(args, False)
+    else:
+        print('Not running numpy')
+
+    if args.use_weld:
+        img2 = run(args, True)
+        img2 = img2.evaluate()
+    else:
+        print('Not running weld')
     
-    assert np.allclose(img1, img2)
+    if args.use_numpy and args.use_weld:
+        assert img1.shape == img2.shape
+        assert img1.strides == img2.strides
+        compare(img1, img2) 
 
 if __name__ == "__main__":
     main()

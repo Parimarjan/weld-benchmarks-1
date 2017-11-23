@@ -190,39 +190,50 @@ def main():
                         help="num iterations for loop")
     parser.add_argument('-p', "--remove_pass", type=str, 
                         default="whatever_string", help="will remove the pass containing this str")
+    parser.add_argument('-numpy', "--use_numpy", type=int, required=False, default=0,
+                        help="use numpy or not in this run")
+    parser.add_argument('-weld', "--use_weld", type=int, required=False, default=0,
+                        help="use weld or not in this run")
 
     args = parser.parse_args()
-
-    galaxy = random_galaxy(args.num_els)
-    # First run numpy
-    start = time.time()
-    ret1 = simulate(galaxy, args.num_times)
-    R = galaxy['x'] + galaxy['y'] + galaxy['z']
-    # assert R.dtype == np.float32, 'should be float64'
-    end = time.time()
-    print('****************************')
-    print('numpy took {} seconds'.format(end-start))
-    print('****************************')
     
-    # Part 2: Weld.
-    wn.remove_pass(args.remove_pass)
-    print(wn.CUR_PASSES)
-    galaxy2 = random_galaxy(args.num_els)
-    for k, v in galaxy2.iteritems():
-        galaxy2[k] = weldarray(v)
+    if args.use_numpy:
+        galaxy = random_galaxy(args.num_els)
+        # First run numpy
+        start = time.time()
+        ret1 = simulate(galaxy, args.num_times)
+        R = galaxy['x'] + galaxy['y'] + galaxy['z']
+        # assert R.dtype == np.float32, 'should be float64'
+        end = time.time()
+        print('****************************')
+        print('numpy took {} seconds'.format(end-start))
+        print('****************************')
+    else:
+        print('Not running numpy')
     
-    start = time.time()
-    ret2 = simulate(galaxy2, args.num_times)
-    R2 = galaxy2['x'] + galaxy2['y'] + galaxy2['z']
-    if isinstance(R2, weldarray):
-        R2 = R2.evaluate()
-    end = time.time()
-    print('****************************')
-    print('weld took {} seconds'.format(end-start)) 
-    print('****************************')
-    
-    compare(ret1, ret2)
-    compare(R, R2)
+    if args.use_weld:
+        # Part 2: Weld.
+        wn.remove_pass(args.remove_pass)
+        print(wn.CUR_PASSES)
+        galaxy2 = random_galaxy(args.num_els)
+        for k, v in galaxy2.iteritems():
+            galaxy2[k] = weldarray(v)
+        
+        start = time.time()
+        ret2 = simulate(galaxy2, args.num_times)
+        R2 = galaxy2['x'] + galaxy2['y'] + galaxy2['z']
+        if isinstance(R2, weldarray):
+            R2 = R2.evaluate()
+        end = time.time()
+        print('****************************')
+        print('weld took {} seconds'.format(end-start)) 
+        print('****************************')
+    else:
+        print('Not running weld')
+ 
+    if args.use_numpy and args.use_weld:
+        compare(ret1, ret2)
+        compare(R, R2)
 
 if __name__ == "__main__":
     main()

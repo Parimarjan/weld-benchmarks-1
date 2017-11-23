@@ -3,6 +3,8 @@
 import argparse
 import time
 from weldnumpy import weldarray
+import numpy as np
+import weldnumpy as wn
 import scipy.special as ss
 import grizzly.grizzly as gr
 from grizzly.lazy_op import LazyOpResult
@@ -134,18 +136,28 @@ if __name__ == '__main__':
                         default=1, help="num_els of 1d arrays")
     parser.add_argument('-p', "--remove_pass", type=str, 
                         default="whatever_string", help="will remove the pass containing this str")
-
+    parser.add_argument('-numpy', "--use_numpy", type=int, required=False, default=0,
+                        help="use numpy or not in this run")
+    parser.add_argument('-weld', "--use_weld", type=int, required=False, default=0,
+                        help="use weld or not in this run")
     args = parser.parse_args()
     print_args(args)
 
-    import numpy as np
-    import weldnumpy as wn
-    call, put = run_blackscholes(args, False)
-    print("*********Finished Numpy**********")
-    wn.remove_pass(args.remove_pass)
-    print(wn.CUR_PASSES)
-    call2, put2 = run_blackscholes(args, True)
-    print('END!')   # So we can stop computing weld timings and stuff
-    print("close put, put2: ", np.allclose(put, put2))
-    print("close call1, call2: ", np.allclose(call, call2))
+    if args.use_numpy:
+        call, put = run_blackscholes(args, False)
+        print("*********Finished Numpy**********")
+    else:
+        print('Not running numpy')
 
+    if args.use_weld:
+        wn.remove_pass(args.remove_pass)
+        print('Passes: ', wn.CUR_PASSES)
+        call2, put2 = run_blackscholes(args, True)
+        print('END!')   # So we can stop computing weld timings and stuff
+    else:
+        print('Not running weld')
+    
+    # Correctness check.
+    if args.use_numpy and args.use_weld:
+        print("close put, put2: ", np.allclose(put, put2))
+        print("close call1, call2: ", np.allclose(call, call2))
