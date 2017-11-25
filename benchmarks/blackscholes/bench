@@ -58,8 +58,6 @@ def blackscholes(price, strike, t, rate, vol, int_eval, use_group):
 
     if isinstance(price, weldarray):
         # weldarrays. weldnumpy supports erf directly
-        # d1 = c05 + c05 * np.erf(d1 * invsqrt2)
-        # d2 = c05 + c05 * np.erf(d2 * invsqrt2)
         d1 = c05 + c05 * wn.erf(d1 * invsqrt2)
         d2 = c05 + c05 * wn.erf(d2 * invsqrt2)
     else:
@@ -153,7 +151,8 @@ if __name__ == '__main__':
     if args.use_weld:
         wn.remove_pass(args.remove_pass)
         print('Passes: ', wn.CUR_PASSES)
-        call2, put2 = run_blackscholes(args, True)
+	for i in range(1):
+		call2, put2 = run_blackscholes(args, True)
         print('END!')   # So we can stop computing weld timings and stuff
     else:
         print('Not running weld')

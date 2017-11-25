@@ -117,11 +117,11 @@ def run_haversine_with_scalar(args):
         print('****************************')
         print('numpy took {} seconds'.format(end-start))
         print('****************************')
+	del(lat) 
+	del(lon)
     else:
         print('Not running numpy')
     # just in case let us free memory
-    del(lat) 
-    del(lon)
 
     if args.use_weld:
         ####### Weld stuff ############
