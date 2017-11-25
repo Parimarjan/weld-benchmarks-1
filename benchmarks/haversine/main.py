@@ -167,6 +167,10 @@ parser.add_argument('-weld', "--use_weld", type=int, required=False, default=0,
                     help="use weld or not in this run")
 
 args = parser.parse_args()
+
+LATS_NAME = LATS_NAME + str(args.scale)
+LONS_NAME = LONS_NAME + str(args.scale)
+
 print_args(args)
 wn.remove_pass(args.remove_pass)
 print('Passes: ', wn.CUR_PASSES)
