@@ -8,7 +8,7 @@ def run_cmd(orig_cmd, name):
     file.
     -- After process_outputs is done, will delete the file.
     '''
-    tries = 2
+    tries = 5
     for i in range(tries):
         # Keep this file for both numpy and weld so can process output easily.
         fname = name + str(i) + '.txt'
@@ -106,7 +106,7 @@ run_blackscholes(BLACKSCHOLES_ARGS, 'infer', 'blackscholes')
 # run_blackscholes(BLACKSCHOLES_ARGS/args.d, 'circuit', 'blackscholes_circuit')
 
 # gives it 50-60 secs as we want.
-HAVERSINE_SCALE = 10**6 / args.d
+HAVERSINE_SCALE = 10**5 / args.d
 run_haversine(HAVERSINE_SCALE, 'whatever', 'haversine')
 # ablation studies!
 run_haversine(HAVERSINE_SCALE, 'fusion', 'haversine')

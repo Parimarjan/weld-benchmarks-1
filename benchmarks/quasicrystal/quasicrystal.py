@@ -3,6 +3,7 @@
 import numpy as np
 # import statsnumpy as np
 from weldnumpy import weldarray
+import weldnumpy as wn
 import time
 import argparse
 
