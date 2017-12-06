@@ -31,44 +31,13 @@ def process_file(f):
             time = get_time_from_string(line)
             if 'END' in line:
                 break 
-            if 'param' in line:
-                params = line
-            # Printing out threads from weldobj right now.
-            if 'threads' in line and time:
-                if 'Threads' not in params:
-                    params += ' Threads: ' + str(time)
-            elif 'weld took' in line and time:
-                assert weld_total == 0
-                weld_total = time
-            elif 'numpy took' in line and time:
+            elif 'bohrium took' in line and time:
                 assert numpy_total == 0
                 numpy_total = time
-            elif 'compile' in line and time:
-                compile_run.append(time)
-            elif 'Python->Weld' in line and time:
-                encode_run.append(time)
-            elif 'Weld->Python' in line and time:
-                decode_run.append(time)
-            elif 'Weld:' in line and time:
-                weld_runtimes.append(time)
         print('********************************************')
-
-    assert len(compile_run) == len(encode_run) == len(decode_run) == len(weld_runtimes)
 
     print('Numpy: ', numpy_total)
     numpys.append(numpy_total)
-    print('compile_run = ', sum(compile_run))
-    compiles.append(sum(compile_run))
-    print('encode_run = ', sum(encode_run))
-    encodes.append(sum(encode_run))
-    print('decode_run = ', sum(decode_run))
-    decodes.append(sum(decode_run))
-    print('weld runtimes = ', sum(weld_runtimes))
-    welds.append(sum(weld_runtimes))
-    total_only_weld = sum(compile_run) + sum(encode_run) + sum(decode_run) + sum(weld_runtimes)
-    print('numpy offload = ', weld_total - total_only_weld)
-    numpy_offloads.append(weld_total - total_only_weld)
-    print('weld end to end = ', weld_total)
     weld_totals.append(weld_total)
 
 def insert_header(header):
@@ -114,17 +83,9 @@ for f in os.listdir(args.dir):
 for f in to_process:
     process_file(f)
 
-assert len(numpys) == len(compiles) == len(encodes) == len(decodes) == len(welds) == \
-len(numpy_offloads) == len(weld_totals)
 print('num trials = ', len(numpys))
 
-compiles.insert(0, float(sum(compiles)) / len(compiles))
 numpys.insert(0, float(sum(numpys)) / len(numpys))
-encodes.insert(0, float(sum(encodes)) / len(encodes))
-decodes.insert(0, float(sum(decodes)) / len(decodes))
-welds.insert(0, float(sum(welds)) / len(welds))
-numpy_offloads.insert(0, float(sum(numpy_offloads)) / len(numpy_offloads))
-weld_totals.insert(0, float(sum(weld_totals)) / len(weld_totals))
 
 # CSV dump time!
 name = args.file + '.csv'
@@ -139,9 +100,3 @@ for i in range(len(compiles) - 1):
 
 insert_header(header)
 insert_row('numpy', numpys)
-insert_row('compile', compiles)
-insert_row('python->weld', encodes)
-insert_row('weld->python', decodes)
-insert_row('weld', welds)
-insert_row('offloaded to numpy',numpy_offloads)
-insert_row('weld end to end', weld_totals)

@@ -2,12 +2,8 @@
 
 import argparse
 import time
-from weldnumpy import weldarray
-import numpy as np
-import weldnumpy as wn
+import bohrium as np
 import scipy.special as ss
-import grizzly.grizzly as gr
-from grizzly.lazy_op import LazyOpResult
 
 invsqrt2 = 1.0 #0.707
 
@@ -24,13 +20,6 @@ def get_data(num_els):
     # random volatility between 0 and 1
     vol = np.float64(np.float64(0.01) + np.random.rand(num_els))
 
-    # TODO: would be nice if this could be avoided...
-    if isinstance(vol, weldarray):
-        price = price.evaluate()
-        strike = strike.evaluate()
-        t = t.evaluate()
-        rate = rate.evaluate()
-        vol = vol.evaluate()
     
     print('***********Got Data*************')
     return price, strike, t, rate, vol
@@ -56,68 +45,27 @@ def blackscholes(price, strike, t, rate, vol, int_eval, use_group):
     d1 = (np.log(price / strike) + rsig * t) / vol_sqrt
     d2 = d1 - vol_sqrt
 
-    if isinstance(price, weldarray):
-        # weldarrays. weldnumpy supports erf directly
-        # d1 = c05 + c05 * np.erf(d1 * invsqrt2)
-        # d2 = c05 + c05 * np.erf(d2 * invsqrt2)
-        d1 = c05 + c05 * wn.erf(d1 * invsqrt2)
-        d2 = c05 + c05 * wn.erf(d2 * invsqrt2)
-    else:
-        # these are numpy arrays, so use scipy's erf function
-        d1 = c05 + c05 * ss.erf(d1 * invsqrt2)
-        d2 = c05 + c05 * ss.erf(d2 * invsqrt2)
+    # d1 = c05 + c05 * ss.erf(d1 * invsqrt2)
+    # d2 = c05 + c05 * ss.erf(d2 * invsqrt2)
     
     # TODO: support negate
     # e_rt = np.exp((-rate) * t)
     e_rt = np.exp((rate) * t)
 
-    if isinstance(price, weldarray) and int_eval:
-        price = price.evaluate()
-        d1 = d1.evaluate()
-        d2 = d2.evaluate()
-        e_rt = e_rt.evaluate()
-        strike = strike.evaluate()
-
     call = price * d1 - e_rt * strike * d2
     put = e_rt * strike * (c10 - d2) - price * (c10 - d1)
-
-    if isinstance(call, weldarray) and use_group:
-        lazy_ops = generate_lazy_op_list([call, put])
-        outputs = gr.group(lazy_ops).evaluate(True, passes=wn.CUR_PASSES)
-
-        call = weldarray(outputs[0])
-        put = weldarray(outputs[1])
-
-    if isinstance(call, weldarray) and not use_group:
-        call = call.evaluate()
-        put = put.evaluate()
-    
+ 
     return call, put
-
-def generate_lazy_op_list(arrays):
-    ret = []
-    for a in arrays:
-        lazy_arr = LazyOpResult(a.weldobj, a._weld_type, 1)
-        ret.append(lazy_arr)
-    return ret
 
 def run_blackscholes(args, use_weld):
     p, s, t, r, v = get_data(args.num_els)
     
-    if use_weld:
-        p = weldarray(p)
-        s = weldarray(s)
-        t = weldarray(t)
-        r = weldarray(r)
-        v = weldarray(v)
-
     start = time.time()
     call, put = blackscholes(p, s, t, r, v, args.int_eval, args.use_group)
+    print(np.sum(call))
+    print(np.sum(put))
 
-    if isinstance(call, weldarray):
-        print "weld took: %.4f (result=%.4f)" % (time.time() - start, call[0])
-    else:
-        print "numpy took: %.4f (result=%.4f)" % (time.time() - start, call[0])
+    print "bohrium took: %.4f (result=%.4f)" % (time.time() - start, call[0])
 
     return call, put
 
@@ -131,7 +79,7 @@ if __name__ == '__main__':
     )
     parser.add_argument('-n', "--num_els", type=int, required=True,
                         help="num_els of 1d arrays")
-    parser.add_argument('-ie', "--int_eval", type=int, required=True,
+    parser.add_argument('-ie', "--int_eval", type=int, required=False,
                         help="num_els of 1d arrays")
     parser.add_argument('-g', "--use_group", type=int, 
                         default=1, help="num_els of 1d arrays")
@@ -144,19 +92,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
     print_args(args)
 
-    if args.use_numpy:
+    if True:
         call, put = run_blackscholes(args, False)
         print("*********Finished Numpy**********")
     else:
         print('Not running numpy')
 
-    if args.use_weld:
-        wn.remove_pass(args.remove_pass)
-        print('Passes: ', wn.CUR_PASSES)
-        call2, put2 = run_blackscholes(args, True)
-        print('END!')   # So we can stop computing weld timings and stuff
-    else:
-        print('Not running weld')
     
     # Correctness check.
     if args.use_numpy and args.use_weld:

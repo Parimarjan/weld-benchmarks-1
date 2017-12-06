@@ -1,19 +1,15 @@
 # import pandas as pd
-import numpy as np
+#import numpy as np
+import bohrium as np
 from math import *
 import time
-from weldnumpy import weldarray
-import weldnumpy as wn
 import argparse
 import csv
 import ast
 import json
 import pandas as pd
 import os
-
-# for group 
-import grizzly.grizzly as gr
-from grizzly.lazy_op import LazyOpResult
+from matplotlib import pyplot as plt
 
 # ### Read in the data
 
@@ -25,9 +21,21 @@ LONS_NAME = 'lons'
 
 # ## Haversine definition
 def haversine(lat1, lon1, lat2, lon2):
-    
+   	
+    #lat1 = np.float64(lat1) 
+    #lat2 = np.float64(lat2)
+    #print(type(lat1))
+    #print(type(lat2))
+
     miles_constant = 3959.0
+    start2 = time.time()
     lat1, lon1, lat2, lon2 = map(np.deg2rad, [lat1, lon1, lat2, lon2]) 
+    lat2 = np.array(lat2)
+    lon2 = np.array(lon2)
+    print("deg2rad took : ", time.time() - start2)
+
+    print(type(lat2))
+
     dlat = lat2 - lat1 
     dlon = lon2 - lon1 
     a = np.sin(dlat/2.0)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2.0)**2
@@ -55,8 +63,8 @@ def gen_data(lat, lon, scale=10):
 
     new_lat = np.array(new_lat)
     new_lon = np.array(new_lon)
-    write_to_file(new_lat, LATS_NAME)
-    write_to_file(new_lon, LONS_NAME)
+    write_to_file(new_lat, LATS_NAME + str(args.scale))
+    write_to_file(new_lon, LONS_NAME + str(args.scale))
 
     return new_lat, new_lon
 
@@ -93,8 +101,8 @@ def print_args(args):
 
 def read_data():
     start = time.time()
-    new_lat = np.fromfile(LATS_NAME)
-    new_lon = np.fromfile(LONS_NAME)
+    new_lat = np.fromfile(LATS_NAME + str(args.scale))
+    new_lon = np.fromfile(LONS_NAME + str(args.scale))
     end = time.time()
     print('reading in data took ', end-start)
     return new_lat, new_lon
@@ -103,19 +111,23 @@ def run_haversine_with_scalar(args):
     orig_lat = df['latitude'].values
     orig_lon = df['longitude'].values
 
-    if args.use_numpy:
+    if True:
         ########### Numpy stuff ############
-        if not os.path.isfile(LATS_NAME):
+        if not os.path.isfile(LATS_NAME + str(args.scale)):
             lat, lon = gen_data(orig_lat, orig_lon, scale=args.scale)
         else:
             lat, lon = read_data()
         print('num rows in lattitudes: ', len(lat))
-
+	
         start = time.time()
         dist1 = haversine(40.671, -73.985, lat, lon)
+	
+	print(np.sum(dist1))
+	#dist1 = dist1.copy2numpy()
+	#np.isfinite(dist1)
         end = time.time()
         print('****************************')
-        print('numpy took {} seconds'.format(end-start))
+        print('bohrium took {} seconds'.format(end-start))
         print('****************************')
     else:
         print('Not running numpy')
@@ -123,32 +135,6 @@ def run_haversine_with_scalar(args):
     del(lat) 
     del(lon)
 
-    if args.use_weld:
-        ####### Weld stuff ############
-        if not os.path.isfile(LATS_NAME):
-            lat2, lon2 = gen_data(orig_lat, orig_lon, scale=args.scale)
-        else:
-            lat2, lon2 = read_data()
-        print('num rows in lattitudes: ', len(lat2))
-        lat2 = weldarray(lat2)
-        lon2 = weldarray(lon2)
-        start = time.time()
-        dist2 = haversine(40.671, -73.985, lat2, lon2) 
-        if args.use_group:
-            print('going to use group')
-            lazy_ops = generate_lazy_op_list([dist2])
-            dist2 = gr.group(lazy_ops).evaluate(True, passes=wn.CUR_PASSES)[0]
-        else:
-            dist2 = dist2.evaluate()
-
-        end = time.time()
-        print('****************************')
-        print('weld took {} seconds'.format(end-start))
-        print('****************************')
-        print('END')
-    else:
-        print('Not running weld')
-    
     if args.use_numpy and args.use_weld:
         compare(dist1, dist2)
 
@@ -168,6 +154,4 @@ parser.add_argument('-weld', "--use_weld", type=int, required=False, default=0,
 
 args = parser.parse_args()
 print_args(args)
-wn.remove_pass(args.remove_pass)
-print('Passes: ', wn.CUR_PASSES)
 run_haversine_with_scalar(args)

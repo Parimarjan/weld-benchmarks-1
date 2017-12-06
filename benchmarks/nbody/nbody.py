@@ -12,10 +12,11 @@ This is done to keep the simulation simple enough for teaching purposes
 All the work is done in the calc_force, move and random_galaxy functions.
 To vectorize the code these are the functions to transform.
 """
-import numpy as np
-import weldnumpy as wn
+# import numpy as np
+import bohrium as np
+#import weldnumpy as wn
 # import weldnumpy as np
-from weldnumpy import weldarray
+#from weldnumpy import weldarray
 import argparse
 import time
 
@@ -47,8 +48,6 @@ def diagonal(ary, offset=0):
         else:
             ary_diag = ary[0, offset:]
     ary_diag.strides = (ary.strides[0]+ary.strides[1],)
-    if isinstance(ary_diag, weldarray):
-        ary_diag._weldarray_view.strides = ary_diag.strides
 
     return ary_diag
 
@@ -84,38 +83,31 @@ def move(galaxy, dt):
     dx = np.transpose(galaxy['x'].view(np.ndarray)[np.newaxis,:]) - galaxy['x'].view(np.ndarray)
     dy = np.transpose(galaxy['y'].view(np.ndarray)[np.newaxis,:]) - galaxy['y'].view(np.ndarray)
     dz = np.transpose(galaxy['z'].view(np.ndarray)[np.newaxis,:]) - galaxy['z'].view(np.ndarray) 
-    if isinstance(galaxy['x'], weldarray):
-        dx = weldarray(dx)
-        dy = weldarray(dy)
-        dz = weldarray(dz)
     end = time.time()
+    print('dx before: ', type(dx))
+    dx = np.array(dx)
+    dy = np.array(dy)
+    dz = np.array(dz)
+    print('dx after np.array: ', type(dx))
     print("dx's creation took ", end-start)
 
     # Euclidian distances (all bodys)
     # r = np.sqrt(dx**2.0 + dy**2.0 + dz**2.0)
     r = np.sqrt(dx**2 + dy**2 + dz**2)
-
-    if isinstance(r, weldarray):
-        r._real_shape = dx._real_shape
+    print('r type: ', type(r))
 
     diagonal(r)[:] = 1.0
-    
-    if False:
-        #stupid hack because cmp ops behave differently in numpy --> returns boolean arrays, and
-        # multiplying that with f64's would not work for us.
-        mask = r._cmp_op(1.0, np.less.__name__)
-        not_mask = r._cmp_op(1.0, np.greater_equal.__name__)
-    else:
-	print('using numpy version for mask!')
+    print('r type: ', type(r))
+    print('using numpy version for mask!')
         # numpy version
-        mask = r < 1.0
-        not_mask = r >= 1.0
-
+ 
+    mask = r < 1.0
+    not_mask = r >= 1.0
     r = (r * not_mask) + mask 
+
     # r2 = r**3.0
     r2 = r**3
-    if isinstance(r2, weldarray):
-        r2 = r2.evaluate()
+    print('r2 type: ', type(r2))
     
     m = galaxy['m'].view(np.ndarray)[np.newaxis,:].T
 
@@ -143,9 +135,8 @@ def simulate(galaxy, timesteps, visualize=False):
     for i in range(timesteps):
         print(i)
         ret = move(galaxy,dt)
-        for k, v in galaxy.iteritems():
-            if isinstance(v, weldarray):
-                galaxy[k] = v.evaluate()
+	#for k, v in galaxy.iteritems():
+		#print(np.sum(v))
     return ret
 
 def compare(R, R2):
@@ -198,43 +189,19 @@ def main():
     args = parser.parse_args()
     print_args(args)
     
-    if args.use_numpy:
+    if True:
         galaxy = random_galaxy(args.num_els)
         # First run numpy
         start = time.time()
         ret1 = simulate(galaxy, args.num_times)
         R = galaxy['x'] + galaxy['y'] + galaxy['z']
+	print('type(R): ', type(R))
+	print(np.sum(R))
         # assert R.dtype == np.float32, 'should be float64'
         end = time.time()
         print('****************************')
-        print('numpy took {} seconds'.format(end-start))
+        print('bohrium took {} seconds'.format(end-start))
         print('****************************')
-    else:
-        print('Not running numpy')
-    
-    if args.use_weld:
-        # Part 2: Weld.
-        wn.remove_pass(args.remove_pass)
-        print(wn.CUR_PASSES)
-        galaxy2 = random_galaxy(args.num_els)
-        for k, v in galaxy2.iteritems():
-            galaxy2[k] = weldarray(v)
-        
-        start = time.time()
-        ret2 = simulate(galaxy2, args.num_times)
-        R2 = galaxy2['x'] + galaxy2['y'] + galaxy2['z']
-        if isinstance(R2, weldarray):
-            R2 = R2.evaluate()
-        end = time.time()
-        print('****************************')
-        print('weld took {} seconds'.format(end-start)) 
-        print('****************************')
-    else:
-        print('Not running weld')
  
-    if args.use_numpy and args.use_weld:
-        compare(ret1, ret2)
-        compare(R, R2)
-
 if __name__ == "__main__":
     main()
