@@ -41,15 +41,17 @@ def run_cmd(orig_cmd, name, only_end_to_end):
     # Let's write stuff there first.
 
     # Let's run the dump-csv script and pass in name. Matches all files with similar name.
-    dump_cmd = 'python ./../process_outputs.py -f {f} -only_end_to_end {e}'.format(f=name,
-            e=only_end_to_end)
+    # dump_cmd = 'python ./../process_outputs.py -f {f} -only_end_to_end {e}'.format(f=name,
+            # e=only_end_to_end)
+
+    dump_cmd = 'python ./../process_outputs.py -f {f}'.format(f=name)
     dump_cmd = dump_cmd.split()
     process = sp.Popen(dump_cmd)
     process.wait()
     # Cleanup!
-    for i in range(tries):
-        fname = name + str(i) + '.txt'
-        os.remove(fname)
+    # for i in range(tries):
+        # fname = name + str(i) + '.txt'
+        # os.remove(fname)
 
 def run_blackscholes(n, p, name, only_end_to_end=0):
     os.chdir('blackscholes')
