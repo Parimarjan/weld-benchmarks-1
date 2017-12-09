@@ -77,8 +77,11 @@ def blackscholes(price, strike, t, rate, vol, int_eval, use_group):
         e_rt = e_rt.evaluate()
         strike = strike.evaluate()
 
-    call = price * d1 - e_rt * strike * d2
+    # CORRECT ONE:
+    call = (price * d1) - (e_rt * strike * d2)
+    #call = price * d1 + e_rt * strike * d2
     put = e_rt * strike * (c10 - d2) - price * (c10 - d1)
+    #put = e_rt * strike * (c10 + d2) + price * (c10 + d1)
 
     if isinstance(call, weldarray) and use_group:
         lazy_ops = generate_lazy_op_list([call, put])
@@ -115,7 +118,8 @@ def run_blackscholes(args, use_weld):
 
     if isinstance(call, weldarray):
 	print("**************************************************")
-        print "weld took: %.4f (result=%.4f)" % (time.time() - start, call[0])
+	print("weld took: ", time.time() - start)
+        #print "weld took: %.4f (result=%.4f)" % (time.time() - start, call[0])
 	print("**************************************************")
     else:
 	print("**************************************************")
@@ -185,5 +189,6 @@ if __name__ == '__main__':
     
     # Correctness check.
     if args.use_numpy and args.use_weld:
-        print("close put, put2: ", np.allclose(put, put2))
-        print("close call1, call2: ", np.allclose(call, call2))
+	pass
+        #print("close put, put2: ", np.allclose(put, put2))
+        #print("close call1, call2: ", np.allclose(call, call2))

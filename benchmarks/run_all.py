@@ -11,7 +11,7 @@ def run_cmd(orig_cmd, name, remove_ops=0, add_ops=''):
     file.
     -- After process_outputs is done, will delete the file.
     '''
-    tries = 2
+    tries = 5
     use_numpy = False
     print('add ops = ', add_ops)
     # kinda weird hacky stuff, need to see if I can make this right.
@@ -121,17 +121,16 @@ args = parser.parse_args()
 # ~100 seconds for numpy
 BLACKSCHOLES_ARGS = (10**8)*2 /args.d
 # TODO: erf.
-BLACKSCHOLES_SUPPORTED_OPS = [np.sqrt.__name__, np.divide.__name__, np.exp.__name__, 'erf', np.add.__name__, np.subtract.__name__]
+BLACKSCHOLES_SUPPORTED_OPS = [np.sqrt.__name__, np.log.__name__, np.divide.__name__, np.exp.__name__, 'erf', np.add.__name__, np.subtract.__name__, np.multiply.__name__]
 
-FILE_NAME = 'blackscholes'
+FILE_NAME = 'bs'
 # run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME)
-print('finished running blackscholes')
 
 if args.run_incremental:
     # first after removing all ops. 
     run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops='')
     ops = ''
-    for op in BLACKSCHOLES_SUPPORTED_OPS:
+    for i, op in enumerate(BLACKSCHOLES_SUPPORTED_OPS):
         # keep building the ops string and run it.
         ops += op + ','
         run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops=ops)
@@ -146,8 +145,8 @@ if args.run_ablation:
 
 # gives it 50-60 secs as we want.
 HAVERSINE_SCALE = 200000 / args.d
-FILE_NAME = 'haversine_latest' 
-run_haversine(HAVERSINE_SCALE, 'All', FILE_NAME)
+FILE_NAME = 'hs' 
+#run_haversine(HAVERSINE_SCALE, 'All', FILE_NAME)
 
 if args.run_ablation:
     run_haversine(HAVERSINE_SCALE, 'fusion', FILE_NAME)
@@ -158,8 +157,8 @@ if args.run_ablation:
 
 # Keeps it around ~70 seconds for numpy
 NBODY_ARGS = 20000 / args.d
-FILE_NAME = 'nbody_latest' 
-run_nbody(NBODY_ARGS, 'All', FILE_NAME)
+FILE_NAME = 'nb'
+#run_nbody(NBODY_ARGS, 'All', FILE_NAME)
 
 if args.run_ablation:
     run_nbody(NBODY_ARGS, 'fusion', FILE_NAME)
