@@ -27,10 +27,15 @@ LONS_NAME = 'lons'
 def haversine(lat1, lon1, lat2, lon2):
     
     miles_constant = 3959.0
+    start2 = time.time()
     lat1, lon1, lat2, lon2 = map(np.deg2rad, [lat1, lon1, lat2, lon2]) 
+    print("deg2rad took: ", time.time() - start2)
     dlat = lat2 - lat1 
     dlon = lon2 - lon1 
-    a = np.sin(dlat/2.0)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2.0)**2
+    #a = np.sin(dlat/2.0)**2 + np.cos(lat1) * np.cos(lat2) * np.sin(dlon/2.0)**2
+    a0 = np.sin(dlat/2.0)  
+    a1 = np.sin(dlon/2.0)
+    a = a0*a0 + np.cos(lat1) * np.cos(lat2) * a1*a1
     c = 2.0 * np.arcsin(np.sqrt(a)) 
     mi = miles_constant * c
     return mi
@@ -135,12 +140,12 @@ def run_haversine_with_scalar(args):
         start = time.time()
         dist2 = haversine(40.671, -73.985, lat2, lon2) 
         if args.use_group:
-            print('going to use group')
             lazy_ops = generate_lazy_op_list([dist2])
             dist2 = gr.group(lazy_ops).evaluate(True, passes=wn.CUR_PASSES)[0]
         else:
             dist2 = dist2.evaluate()
-
+	
+	print(np.sum(dist2))
         end = time.time()
         print('****************************')
         print('weld took {} seconds'.format(end-start))
@@ -173,5 +178,12 @@ LONS_NAME = LONS_NAME + str(args.scale)
 
 print_args(args)
 wn.remove_pass(args.remove_pass)
+#wn.CUR_PASSES = []
+#wn.remove_pass("size")
+#wn.remove_pass("fusion")
+#wn.remove_pass("vector")
+#wn.remove_pass("predicate")
+#wn.remove_pass("circuit")
+
 print('Passes: ', wn.CUR_PASSES)
 run_haversine_with_scalar(args)

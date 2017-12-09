@@ -56,10 +56,11 @@ def run(args, use_weld):
     # TODO: FIXME --> can we support this in weld? Right now it offloads it.
     theta  = np.arctan2(yv, xv)
 
-    a = xv**2 + yv**2
+    #a = xv**2 + yv**2
+    a = (xv*xv) + (yv*yv)
     # just to remove 0's from a, and stop numpy from complaining.
     # TODO: Maybe remove this since it was not there in original.
-    a += 1.0
+    #a += 1.0
     r      = np.log(np.sqrt(a))
     if isinstance(r, weldarray):
         r = r.evaluate()
@@ -80,7 +81,7 @@ def run(args, use_weld):
     
     cinner = np.cos(inner)
     sinner = np.sin(inner)
-    
+     
     for i, phase in enumerate(phases):
         print(i)
         tmp2 = cinner * np.cos(phase) - sinner * np.sin(phase)

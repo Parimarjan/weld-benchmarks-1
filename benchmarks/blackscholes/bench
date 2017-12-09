@@ -113,9 +113,13 @@ def run_blackscholes(args, use_weld):
     call, put = blackscholes(p, s, t, r, v, args.int_eval, args.use_group)
 
     if isinstance(call, weldarray):
+	print("**************************************************")
         print "weld took: %.4f (result=%.4f)" % (time.time() - start, call[0])
+	print("**************************************************")
     else:
+	print("**************************************************")
         print "numpy took: %.4f (result=%.4f)" % (time.time() - start, call[0])
+	print("**************************************************")
 
     return call, put
 
@@ -143,7 +147,8 @@ if __name__ == '__main__':
     print_args(args)
 
     if args.use_numpy:
-        call, put = run_blackscholes(args, False)
+	for i in range(1):
+		call, put = run_blackscholes(args, False)
         print("*********Finished Numpy**********")
     else:
         print('Not running numpy')

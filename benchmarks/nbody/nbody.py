@@ -92,15 +92,15 @@ def move(galaxy, dt):
     print("dx's creation took ", end-start)
 
     # Euclidian distances (all bodys)
-    # r = np.sqrt(dx**2.0 + dy**2.0 + dz**2.0)
-    r = np.sqrt(dx**2 + dy**2 + dz**2)
+    #r = np.sqrt(dx**2 + dy**2 + dz**2)
+    r = np.sqrt(dx*dx + dy*dy + dz*dz)
 
     if isinstance(r, weldarray):
         r._real_shape = dx._real_shape
 
     diagonal(r)[:] = 1.0
     
-    if False:
+    if isinstance(r, weldarray):
         #stupid hack because cmp ops behave differently in numpy --> returns boolean arrays, and
         # multiplying that with f64's would not work for us.
         mask = r._cmp_op(1.0, np.less.__name__)

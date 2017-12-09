@@ -1,6 +1,8 @@
 import argparse
 import subprocess as sp
 import os
+import time
+import csv
 
 def run_cmd(orig_cmd, name):
     '''
@@ -9,25 +11,39 @@ def run_cmd(orig_cmd, name):
     -- After process_outputs is done, will delete the file.
     '''
     tries = 5
+    use_numpy = False
+    for c in orig_cmd:
+	if c == "All":
+		use_numpy = True
+    if "blackschole" in name:	
+	use_numpy = True
     for i in range(tries):
         # Keep this file for both numpy and weld so can process output easily.
+	print("i = ", i)
         fname = name + str(i) + '.txt'
         f = open(fname, 'w')
         # Numpy turn
         cmd = list(orig_cmd)
-        cmd.append('-numpy')
-        cmd.append('1')
-        print('**********going to run********: ', cmd)
-        process = sp.Popen(cmd, stdout=f)
-        process.wait()
-        # Weld turn!
-        cmd = list(orig_cmd)
+	if use_numpy:
+		cmd.append('-numpy')
+		cmd.append('1')
         cmd.append('-weld')
         cmd.append('1')
         print('**********going to run********: ', cmd)
-        process = sp.Popen(cmd, stdout=f)
+        process = sp.Popen(cmd, stdout=f, stderr=f)
+        # process = sp.Popen(cmd)
         process.wait()
+	print("process over!")
+        # Weld turn!
+        #cmd = list(orig_cmd)
+        #cmd.append('-weld')
+        #cmd.append('1')
+        #print('**********going to run********: ', cmd)
+        #process = sp.Popen(cmd, stdout=f)
+        #process.wait()
         f.close()
+    # Let's write stuff there first.
+
     # Let's run the dump-csv script and pass in name. Matches all files with similar name.
     dump_cmd = 'python ./../process_outputs.py -f {f}'.format(f=name)
     dump_cmd = dump_cmd.split()
@@ -39,6 +55,15 @@ def run_cmd(orig_cmd, name):
         os.remove(fname)
 
 def run_blackscholes(n, p, name):
+    os.chdir('blackscholes')
+    f = 'bench'
+    args = '-n {n} -ie 0 -g 1 -p {p}'.format(n=n, p=p)
+    cmd = 'python {file} {args}'.format(file=f, args=args)
+    cmd = cmd.split()
+    run_cmd(cmd, name)
+    os.chdir('..')
+
+def run_blackscholes_no_group(n, p, name):
     os.chdir('blackscholes')
     f = 'bench'
     args = '-n {n} -ie 1 -g 0 -p {p}'.format(n=n, p=p)
@@ -59,7 +84,7 @@ def run_nbody(n, p, name):
 def run_haversine(s, p, name):
     os.chdir('haversine')
     f = 'main.py'
-    args = '-s {s} -g 1 -p {p}'.format(s=s, p=p)
+    args = '-s {s} -g 0 -p {p}'.format(s=s, p=p)
     cmd = 'python {file} {args}'.format(file=f, args=args)
     cmd = cmd.split()
     run_cmd(cmd, name)
@@ -79,15 +104,6 @@ def run_quasi(n, p, name):
     run_cmd(cmd, name)
     os.chdir('..')
 
-def run_haversine(s, p, name):
-    os.chdir('haversine')
-    f = 'main.py'
-    args = '-s {s} -g 1 -p {p}'.format(s=s, p=p)
-    cmd = 'python {file} {args}'.format(file=f, args=args)
-    cmd = cmd.split()
-    run_cmd(cmd, name)
-    os.chdir('..')
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--d", type=int, required=False,
@@ -96,39 +112,47 @@ args = parser.parse_args()
 
 # ~100 seconds for numpy
 BLACKSCHOLES_ARGS = (10**8)*2 /args.d
-run_blackscholes(BLACKSCHOLES_ARGS, 'whatever', 'blackscholes')
-# ablation studies!
-run_blackscholes(BLACKSCHOLES_ARGS, 'fusion', 'blackscholes')
-run_blackscholes(BLACKSCHOLES_ARGS, 'vector', 'blackscholes')
-run_blackscholes(BLACKSCHOLES_ARGS, 'infer', 'blackscholes')
+FILE_NAME = 'blackscholes_latest'
+file_name = FILE_NAME + '.csv'
 
-# run_blackscholes(BLACKSCHOLES_ARGS/args.d, 'predicat', 'blackscholes_predicat')
-# run_blackscholes(BLACKSCHOLES_ARGS/args.d, 'circuit', 'blackscholes_circuit')
+run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME)
+print('DONE FIRST BLACKSCHOLES!!!!!!')
+# ablation studies!
+
+run_blackscholes(BLACKSCHOLES_ARGS, 'fusion', FILE_NAME)
+run_blackscholes(BLACKSCHOLES_ARGS, 'vectorize', FILE_NAME)
+run_blackscholes(BLACKSCHOLES_ARGS, 'infer-size', FILE_NAME)
+run_blackscholes(BLACKSCHOLES_ARGS/args.d, 'predicate', FILE_NAME)
+run_blackscholes_no_group(BLACKSCHOLES_ARGS, 'nogroup', FILE_NAME)
+
+# run_blackscholes(BLACKSCHOLES_ARGS/args.d, 'circuit', FILE_NAME)
 
 # gives it 50-60 secs as we want.
-HAVERSINE_SCALE = 10**5 / args.d
-run_haversine(HAVERSINE_SCALE, 'whatever', 'haversine')
+HAVERSINE_SCALE = 200000 / args.d
+FILE_NAME = 'haversine_latest' 
+run_haversine(HAVERSINE_SCALE, 'All', FILE_NAME)
 # ablation studies!
-run_haversine(HAVERSINE_SCALE, 'fusion', 'haversine')
-run_haversine(HAVERSINE_SCALE, 'vector', 'haversine')
-run_haversine(HAVERSINE_SCALE, 'infer', 'haversine')
-# run_haversine(HAVERSINE_SCALE, 'predicate', 'haversine_predicate')
-# run_haversine(HAVERSINE_SCALE, 'circuit', 'haversine_circuit')
+run_haversine(HAVERSINE_SCALE, 'fusion', FILE_NAME)
+run_haversine(HAVERSINE_SCALE, 'vectorize', FILE_NAME)
+run_haversine(HAVERSINE_SCALE, 'infer', FILE_NAME)
+run_haversine(HAVERSINE_SCALE, 'predicate', FILE_NAME)
+# run_haversine(HAVERSINE_SCALE, 'circuit', FILE_NAME)
 
 # Keeps it around ~70 seconds for numpy
-NBODY_ARGS = 25000 / args.d
-run_nbody(NBODY_ARGS, 'whatever', 'nbody')
-run_nbody(NBODY_ARGS, 'fusion', 'nbody')
-run_nbody(NBODY_ARGS, 'vector', 'nbody')
-run_nbody(NBODY_ARGS, 'infer', 'nbody')
-# run_nbody(NBODY_ARGS, 'predicate', 'nbody_predicate')
-# run_nbody(NBODY_ARGS, 'circuit', 'nbody_circuit')
+NBODY_ARGS = 20000 / args.d
+FILE_NAME = 'nbody_latest' 
+run_nbody(NBODY_ARGS, 'All', FILE_NAME)
+run_nbody(NBODY_ARGS, 'fusion', FILE_NAME)
+run_nbody(NBODY_ARGS, 'vector', FILE_NAME)
+run_nbody(NBODY_ARGS, 'infer', FILE_NAME)
+run_nbody(NBODY_ARGS, 'predicate', FILE_NAME)
+# run_nbody(NBODY_ARGS, 'circuit', FILE_NAME)
 
 PIXELS = 2048 / args.d
-run_quasi(PIXELS, 'whatever', 'quasi')
-run_quasi(PIXELS, 'fusion', 'quasi')
-run_quasi(PIXELS, 'vector', 'quasi')
-run_quasi(PIXELS, 'infer', 'quasi')
+#run_quasi(PIXELS, 'All', 'quasi')
+#run_quasi(PIXELS, 'fusion', 'quasi')
+#run_quasi(PIXELS, 'vector', 'quasi')
+#run_quasi(PIXELS, 'infer', 'quasi')
 
 # run_quasi('predicate', 'quasi')
 # run_quasi('circuit', 'quasi')

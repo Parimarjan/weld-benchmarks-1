@@ -132,16 +132,16 @@ file_name = os.path.join(args.dir, name)
 dumpster = csv.writer(open(file_name,'a'))
 
 # Let's output this to a csv!
-header = ['Benchmark', 'Scheme', 'Paramaters', 'Mean']
+header = ['Benchmark', 'Scheme', 'Paramaters', 'Mean Time']
 for i in range(len(compiles) - 1):
-    new_header = 'Trial {}'.format(i)
+    new_header = 'Trial {}'.format(i+1)
     header.append(new_header)
 
 insert_header(header)
 insert_row('numpy', numpys)
 insert_row('compile', compiles)
-insert_row('python->weld', encodes)
-insert_row('weld->python', decodes)
-insert_row('weld', welds)
+insert_row('Python->Weld', encodes)
+insert_row('Weld->Python', decodes)
+insert_row('Weld', welds)
 insert_row('offloaded to numpy',numpy_offloads)
-insert_row('weld end to end', weld_totals)
+insert_row('Weld end-to-end', weld_totals)
