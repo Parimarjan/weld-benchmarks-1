@@ -127,6 +127,16 @@ def print_args(args):
     d = vars(args)
     print('params: ', str(d))
 
+def process_weld_args(args):
+    wn.remove_pass(args.remove_pass)
+    if args.remove_ops:
+        wn.remove_all_ops()
+        # now need to add stuff back in as needed.
+        ops = args.add_ops.split(',')
+        print(ops)
+        print(len(ops))
+        wn.add_ops(ops)
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="give num_els of arrays used for blackscholes"
@@ -143,6 +153,11 @@ if __name__ == '__main__':
                         help="use numpy or not in this run")
     parser.add_argument('-weld', "--use_weld", type=int, required=False, default=0,
                         help="use weld or not in this run")
+    parser.add_argument('-remove_ops', type=int, required=False, default=0, 
+                        help="remove supported weld ops")
+    parser.add_argument('-add_ops', type=str, required=False, default="", 
+                        help="comma separated list of ops to add")
+
     args = parser.parse_args()
     print_args(args)
 
@@ -154,7 +169,7 @@ if __name__ == '__main__':
         print('Not running numpy')
 
     if args.use_weld:
-        wn.remove_pass(args.remove_pass)
+        process_weld_args(args)
         print('Passes: ', wn.CUR_PASSES)
 	for i in range(1):
 		call2, put2 = run_blackscholes(args, True)

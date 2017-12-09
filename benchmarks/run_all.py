@@ -4,7 +4,7 @@ import os
 import time
 import csv
 
-def run_cmd(orig_cmd, name):
+def run_cmd(orig_cmd, name, only_end_to_end):
     '''
     -- For each cmd, will run it once with numpy and once with weld and output results to the same
     file.
@@ -12,11 +12,13 @@ def run_cmd(orig_cmd, name):
     '''
     tries = 5
     use_numpy = False
+    # kinda weird hacky stuff, need to see if I can make this right.
     for c in orig_cmd:
 	if c == "All":
 		use_numpy = True
     if "blackschole" in name:	
 	use_numpy = True
+
     for i in range(tries):
         # Keep this file for both numpy and weld so can process output easily.
 	print("i = ", i)
@@ -34,18 +36,12 @@ def run_cmd(orig_cmd, name):
         # process = sp.Popen(cmd)
         process.wait()
 	print("process over!")
-        # Weld turn!
-        #cmd = list(orig_cmd)
-        #cmd.append('-weld')
-        #cmd.append('1')
-        #print('**********going to run********: ', cmd)
-        #process = sp.Popen(cmd, stdout=f)
-        #process.wait()
         f.close()
     # Let's write stuff there first.
 
     # Let's run the dump-csv script and pass in name. Matches all files with similar name.
-    dump_cmd = 'python ./../process_outputs.py -f {f}'.format(f=name)
+    dump_cmd = 'python ./../process_outputs.py -f {f} -only_end_to_end {}'.format(f=name,
+            e=only_end_to_end)
     dump_cmd = dump_cmd.split()
     process = sp.Popen(dump_cmd)
     process.wait()
@@ -54,7 +50,7 @@ def run_cmd(orig_cmd, name):
         fname = name + str(i) + '.txt'
         os.remove(fname)
 
-def run_blackscholes(n, p, name):
+def run_blackscholes(n, p, name, only_end_to_end=False):
     os.chdir('blackscholes')
     f = 'bench'
     args = '-n {n} -ie 0 -g 1 -p {p}'.format(n=n, p=p)
@@ -69,28 +65,28 @@ def run_blackscholes_no_group(n, p, name):
     args = '-n {n} -ie 1 -g 0 -p {p}'.format(n=n, p=p)
     cmd = 'python {file} {args}'.format(file=f, args=args)
     cmd = cmd.split()
-    run_cmd(cmd, name)
+    run_cmd(cmd, name, only_end_to_end)
     os.chdir('..')
 
-def run_nbody(n, p, name):
+def run_nbody(n, p, name, only_end_to_end=False):
     os.chdir('nbody')
     f = 'nbody.py'
     args = '-n {n} -t 1 -p {p}'.format(n=n, p=p)
     cmd = 'python {file} {args}'.format(file=f, args=args)
     cmd = cmd.split()
-    run_cmd(cmd, name)
+    run_cmd(cmd, name, only_end_to_end)
     os.chdir('..')
 
-def run_haversine(s, p, name):
+def run_haversine(s, p, name, only_end_to_end=False):
     os.chdir('haversine')
     f = 'main.py'
     args = '-s {s} -g 0 -p {p}'.format(s=s, p=p)
     cmd = 'python {file} {args}'.format(file=f, args=args)
     cmd = cmd.split()
-    run_cmd(cmd, name)
+    run_cmd(cmd, name, only_end_to_end)
     os.chdir('..')
 
-def run_quasi(n, p, name):
+def run_quasi(n, p, name, only_end_to_end=False):
     os.chdir('quasicrystal')
     f = 'quasicrystal.py'
     # TODO: loop over different options here?
@@ -101,22 +97,27 @@ def run_quasi(n, p, name):
     args = '-k {k} -s {s} -n {n} -t {t} -p {p}'.format(k=k, s=s, t=t, n=n, p=p)
     cmd = 'python {file} {args}'.format(file=f, args=args)
     cmd = cmd.split()
-    run_cmd(cmd, name)
+    run_cmd(cmd, name, only_end_to_end)
     os.chdir('..')
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--d", type=int, required=False,
                     default=1, help="divide all size args by d")
+parser.add_argument("-run_ablation", type=int, required=False,
+                    default=0, help="run ablation studies?")
+parser.add_argument("-run_incremental", type=int, required=False,
+                    default=0, help="run ablation studies?")
+
 args = parser.parse_args()
 
 # ~100 seconds for numpy
 BLACKSCHOLES_ARGS = (10**8)*2 /args.d
 FILE_NAME = 'blackscholes_latest'
 file_name = FILE_NAME + '.csv'
+BLACKSCHOLES_SUPPORTED_OPS = [np.sqrt, np.divide, np.exp, np.add, np.subtract]
 
 run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME)
-print('DONE FIRST BLACKSCHOLES!!!!!!')
 # ablation studies!
 
 run_blackscholes(BLACKSCHOLES_ARGS, 'fusion', FILE_NAME)
@@ -154,5 +155,3 @@ PIXELS = 2048 / args.d
 #run_quasi(PIXELS, 'vector', 'quasi')
 #run_quasi(PIXELS, 'infer', 'quasi')
 
-# run_quasi('predicate', 'quasi')
-# run_quasi('circuit', 'quasi')

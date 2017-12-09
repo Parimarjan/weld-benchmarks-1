@@ -89,6 +89,8 @@ parser.add_argument("-f", "--file", type=str, required=False,
                    help="output file pattern to parse") 
 parser.add_argument("-d", "--dir", type=str, required=False, default='./',
                    help="output file pattern to parse") 
+parser.add_argument("-only_end_to_end", type=int, required=False, default=0,
+                   help="only output end to end times in the csv") 
 
 args = parser.parse_args()
 
@@ -138,10 +140,12 @@ for i in range(len(compiles) - 1):
     header.append(new_header)
 
 insert_header(header)
-insert_row('numpy', numpys)
-insert_row('compile', compiles)
-insert_row('Python->Weld', encodes)
-insert_row('Weld->Python', decodes)
-insert_row('Weld', welds)
-insert_row('offloaded to numpy',numpy_offloads)
-insert_row('Weld end-to-end', weld_totals)
+if not args.only_end_to_end:
+    insert_row('numpy', numpys)
+    insert_row('compile', compiles)
+    insert_row('python->weld', encodes)
+    insert_row('weld->python', decodes)
+    insert_row('weld', welds)
+    insert_row('offloaded to numpy',numpy_offloads)
+
+insert_row('weld end to end', weld_totals)
