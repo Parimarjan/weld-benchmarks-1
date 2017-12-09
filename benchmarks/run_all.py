@@ -5,7 +5,7 @@ import time
 import csv
 import numpy as np
 
-def run_cmd(orig_cmd, name, only_end_to_end):
+def run_cmd(orig_cmd, name, remove_ops=0, add_ops=''):
     '''
     -- For each cmd, will run it once with numpy and once with weld and output results to the same
     file.
@@ -13,6 +13,7 @@ def run_cmd(orig_cmd, name, only_end_to_end):
     '''
     tries = 2
     use_numpy = False
+    print('add ops = ', add_ops)
     # kinda weird hacky stuff, need to see if I can make this right.
     for c in orig_cmd:
 	if c == "All":
@@ -25,13 +26,19 @@ def run_cmd(orig_cmd, name, only_end_to_end):
 	print("i = ", i)
         fname = name + str(i) + '.txt'
         f = open(fname, 'w')
-        # Numpy turn
         cmd = list(orig_cmd)
 	if use_numpy:
 		cmd.append('-numpy')
 		cmd.append('1')
         cmd.append('-weld')
         cmd.append('1')
+
+        if remove_ops:
+            cmd.append('-remove_ops')
+            cmd.append('1')
+            cmd.append('-add_ops')
+            cmd.append(add_ops)
+
         print('**********going to run********: ', cmd)
         process = sp.Popen(cmd, stdout=f, stderr=f)
         # process = sp.Popen(cmd)
@@ -41,55 +48,53 @@ def run_cmd(orig_cmd, name, only_end_to_end):
     # Let's write stuff there first.
 
     # Let's run the dump-csv script and pass in name. Matches all files with similar name.
-    # dump_cmd = 'python ./../process_outputs.py -f {f} -only_end_to_end {e}'.format(f=name,
-            # e=only_end_to_end)
+    dump_cmd = 'python ./../process_outputs.py -f {f} '.format(f=name)
 
-    dump_cmd = 'python ./../process_outputs.py -f {f}'.format(f=name)
     dump_cmd = dump_cmd.split()
     process = sp.Popen(dump_cmd)
     process.wait()
     # Cleanup!
-    # for i in range(tries):
-        # fname = name + str(i) + '.txt'
-        # os.remove(fname)
+    for i in range(tries):
+        fname = name + str(i) + '.txt'
+        os.remove(fname)
 
-def run_blackscholes(n, p, name, only_end_to_end=0):
+def run_blackscholes(n, p, name, **kwargs):
     os.chdir('blackscholes')
     f = 'bench'
     args = '-n {n} -ie 0 -g 1 -p {p}'.format(n=n, p=p)
     cmd = 'python {file} {args}'.format(file=f, args=args)
     cmd = cmd.split()
-    run_cmd(cmd, name, only_end_to_end)
+    run_cmd(cmd, name, **kwargs)
     os.chdir('..')
 
-def run_blackscholes_no_group(n, p, name, only_end_to_end=0):
+def run_blackscholes_no_group(n, p, name, **kwargs):
     os.chdir('blackscholes')
     f = 'bench'
     args = '-n {n} -ie 1 -g 0 -p {p}'.format(n=n, p=p)
     cmd = 'python {file} {args}'.format(file=f, args=args)
     cmd = cmd.split()
-    run_cmd(cmd, name, only_end_to_end)
+    run_cmd(cmd, name, *kwargs)
     os.chdir('..')
 
-def run_nbody(n, p, name, only_end_to_end=0):
+def run_nbody(n, p, name, **kwargs):
     os.chdir('nbody')
     f = 'nbody.py'
     args = '-n {n} -t 1 -p {p}'.format(n=n, p=p)
     cmd = 'python {file} {args}'.format(file=f, args=args)
     cmd = cmd.split()
-    run_cmd(cmd, name, only_end_to_end)
+    run_cmd(cmd, name, *kwargs)
     os.chdir('..')
 
-def run_haversine(s, p, name, only_end_to_end=0):
+def run_haversine(s, p, name, **kwargs):
     os.chdir('haversine')
     f = 'main.py'
     args = '-s {s} -g 0 -p {p}'.format(s=s, p=p)
     cmd = 'python {file} {args}'.format(file=f, args=args)
     cmd = cmd.split()
-    run_cmd(cmd, name, only_end_to_end)
+    run_cmd(cmd, name, *kwargs)
     os.chdir('..')
 
-def run_quasi(n, p, name, only_end_to_end=0):
+def run_quasi(n, p, name, **kwargs):
     os.chdir('quasicrystal')
     f = 'quasicrystal.py'
     # TODO: loop over different options here?
@@ -100,9 +105,8 @@ def run_quasi(n, p, name, only_end_to_end=0):
     args = '-k {k} -s {s} -n {n} -t {t} -p {p}'.format(k=k, s=s, t=t, n=n, p=p)
     cmd = 'python {file} {args}'.format(file=f, args=args)
     cmd = cmd.split()
-    run_cmd(cmd, name, only_end_to_end)
+    run_cmd(cmd, name, *kwargs)
     os.chdir('..')
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-d", "--d", type=int, required=False,
@@ -116,11 +120,21 @@ args = parser.parse_args()
 
 # ~100 seconds for numpy
 BLACKSCHOLES_ARGS = (10**8)*2 /args.d
-BLACKSCHOLES_SUPPORTED_OPS = [np.sqrt, np.divide, np.exp, np.add, np.subtract]
+# TODO: erf.
+BLACKSCHOLES_SUPPORTED_OPS = [np.sqrt.__name__, np.divide.__name__, np.exp.__name__, 'erf', np.add.__name__, np.subtract.__name__]
 
 FILE_NAME = 'blackscholes'
+# run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME)
+print('finished running blackscholes')
 
-run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME)
+if args.run_incremental:
+    # first after removing all ops. 
+    run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops='')
+    ops = ''
+    for op in BLACKSCHOLES_SUPPORTED_OPS:
+        # keep building the ops string and run it.
+        ops += op + ','
+        run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops=ops)
 
 if args.run_ablation:
     run_blackscholes(BLACKSCHOLES_ARGS, 'fusion', FILE_NAME)

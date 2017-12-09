@@ -10,6 +10,7 @@ import grizzly.grizzly as gr
 from grizzly.lazy_op import LazyOpResult
 
 invsqrt2 = 1.0 #0.707
+USE_ERF = True
 
 def get_data(num_els):
     np.random.seed(1)
@@ -56,7 +57,7 @@ def blackscholes(price, strike, t, rate, vol, int_eval, use_group):
     d1 = (np.log(price / strike) + rsig * t) / vol_sqrt
     d2 = d1 - vol_sqrt
 
-    if isinstance(price, weldarray):
+    if isinstance(price, weldarray) and USE_ERF:
         # weldarrays. weldnumpy supports erf directly
         d1 = c05 + c05 * wn.erf(d1 * invsqrt2)
         d2 = c05 + c05 * wn.erf(d2 * invsqrt2)
@@ -128,14 +129,19 @@ def print_args(args):
     print('params: ', str(d))
 
 def process_weld_args(args):
+    global USE_ERF
     wn.remove_pass(args.remove_pass)
+    USE_ERF = False
+
     if args.remove_ops:
         wn.remove_all_ops()
         # now need to add stuff back in as needed.
         ops = args.add_ops.split(',')
         print(ops)
-        print(len(ops))
         wn.add_ops(ops)
+        if 'erf' in ops:
+            USE_ERF = True
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

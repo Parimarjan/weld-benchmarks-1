@@ -52,7 +52,7 @@ def process_file(f):
             elif 'Weld:' in line and time:
                 weld_runtimes.append(time)
         print('********************************************')
-
+    
     assert len(compile_run) == len(encode_run) == len(decode_run) == len(weld_runtimes)
 
     print('Numpy: ', numpy_total)
