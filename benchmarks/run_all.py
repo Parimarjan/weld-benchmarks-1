@@ -129,7 +129,7 @@ FILE_NAME = 'bs'
 
 if args.run_incremental:
     # first after removing all ops. 
-    run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops='')
+    #run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops='')
     ops = ''
     for i, op in enumerate(BLACKSCHOLES_SUPPORTED_OPS):
         # keep building the ops string and run it.
@@ -147,7 +147,19 @@ if args.run_ablation:
 # gives it 50-60 secs as we want.
 HAVERSINE_SCALE = 200000 / args.d
 FILE_NAME = 'hs' 
+HAVERSINE_SUPPORTED_OPS = [np.subtract.__name__, np.divide.__name__, np.arcsin.__name__,
+        np.cos.__name__, np.add.__name__, np.sqrt.__name__, np.sin.__name__, np.multiply.__name__]
+
 #run_haversine(HAVERSINE_SCALE, 'All', FILE_NAME)
+
+if args.run_incremental:
+    # first after removing all ops. 
+    run_haversine(HAVERSINE_SCALE, 'All', FILE_NAME, remove_ops=1, add_ops='')
+    ops = ''
+    for i, op in enumerate(HAVERSINE_SUPPORTED_OPS):
+        # keep building the ops string and run it.
+        ops += op + ','
+        run_haversine(HAVERSINE_SCALE, 'All', FILE_NAME, remove_ops=1, add_ops=ops)
 
 if args.run_ablation:
     run_haversine(HAVERSINE_SCALE, 'fusion', FILE_NAME)
@@ -155,6 +167,7 @@ if args.run_ablation:
     run_haversine(HAVERSINE_SCALE, 'infer', FILE_NAME)
     run_haversine(HAVERSINE_SCALE, 'predicate', FILE_NAME)
     run_haversine(HAVERSINE_SCALE, 'circuit', FILE_NAME)
+
 
 # Keeps it around ~70 seconds for numpy
 NBODY_ARGS = 20000 / args.d

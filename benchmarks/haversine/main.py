@@ -96,6 +96,15 @@ def print_args(args):
     d = vars(args)
     print('params: ', str(d))
 
+def process_weld_args(args):
+    wn.remove_pass(args.remove_pass)
+    if args.remove_ops:
+        wn.remove_all_ops()
+        # now need to add stuff back in as needed.
+        ops = args.add_ops.split(',')
+        print(ops)
+        wn.add_ops(ops)
+
 def read_data():
     start = time.time()
     new_lat = np.fromfile(LATS_NAME)
@@ -170,6 +179,11 @@ parser.add_argument('-numpy', "--use_numpy", type=int, required=False, default=0
                     help="use numpy or not in this run")
 parser.add_argument('-weld', "--use_weld", type=int, required=False, default=0,
                     help="use weld or not in this run")
+parser.add_argument('-remove_ops', type=int, required=False, default=0, 
+                    help="remove supported weld ops")
+parser.add_argument('-add_ops', type=str, required=False, default="", 
+                    help="comma separated list of ops to add")
+
 
 args = parser.parse_args()
 
