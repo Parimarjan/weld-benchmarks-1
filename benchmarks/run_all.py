@@ -121,7 +121,8 @@ args = parser.parse_args()
 # ~100 seconds for numpy
 BLACKSCHOLES_ARGS = (10**8)*2 /args.d
 # TODO: erf.
-BLACKSCHOLES_SUPPORTED_OPS = [np.sqrt.__name__, np.log.__name__, np.divide.__name__, np.exp.__name__, 'erf', np.add.__name__, np.subtract.__name__, np.multiply.__name__]
+#BLACKSCHOLES_SUPPORTED_OPS = [np.sqrt.__name__, np.log.__name__, np.divide.__name__, np.exp.__name__, 'erf', np.add.__name__, np.subtract.__name__, np.multiply.__name__]
+BLACKSCHOLES_SUPPORTED_OPS = [np.subtract.__name__, np.exp.__name__, np.add.__name__, 'erf', np.divide.__name__, np.sqrt.__name__, np.log.__name__, np.multiply.__name__]
 
 FILE_NAME = 'bs'
 # run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME)
@@ -133,7 +134,7 @@ if args.run_incremental:
     for i, op in enumerate(BLACKSCHOLES_SUPPORTED_OPS):
         # keep building the ops string and run it.
         ops += op + ','
-        run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops=ops)
+        #run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops=ops)
 
 if args.run_ablation:
     run_blackscholes(BLACKSCHOLES_ARGS, 'fusion', FILE_NAME)

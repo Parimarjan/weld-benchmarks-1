@@ -13,7 +13,8 @@ invsqrt2 = 1.0 #0.707
 USE_ERF = True
 
 def get_data(num_els):
-    np.random.seed(1)
+    #np.random.seed(1)
+    np.random.seed(2592)
     # random prices between 1 and 101
     price = np.float64(np.random.rand(num_els) * np.float64(100.0))
     # random prices between 0 and 101
@@ -24,15 +25,7 @@ def get_data(num_els):
     rate = np.float64(np.float64(0.01) + np.random.rand(num_els))
     # random volatility between 0 and 1
     vol = np.float64(np.float64(0.01) + np.random.rand(num_els))
-
-    # TODO: would be nice if this could be avoided...
-    if isinstance(vol, weldarray):
-        price = price.evaluate()
-        strike = strike.evaluate()
-        t = t.evaluate()
-        rate = rate.evaluate()
-        vol = vol.evaluate()
-    
+ 
     print('***********Got Data*************')
     return price, strike, t, rate, vol
 
@@ -49,6 +42,8 @@ def blackscholes(price, strike, t, rate, vol, int_eval, use_group):
     '''
     c05 = np.float64(3.0)
     c10 = np.float64(1.5)
+    #print('rate: ', len(rate))
+    #print('t: ', len(t))
 
     # rsig = rate + (vol*vol) * c05
     rsig = rate + (vol*vol) * c05
@@ -66,7 +61,6 @@ def blackscholes(price, strike, t, rate, vol, int_eval, use_group):
         d1 = c05 + c05 * ss.erf(d1 * invsqrt2)
         d2 = c05 + c05 * ss.erf(d2 * invsqrt2)
     
-    # TODO: support negate
     # e_rt = np.exp((-rate) * t)
     e_rt = np.exp((rate) * t)
 
@@ -190,5 +184,5 @@ if __name__ == '__main__':
     # Correctness check.
     if args.use_numpy and args.use_weld:
 	pass
-        #print("close put, put2: ", np.allclose(put, put2))
-        #print("close call1, call2: ", np.allclose(call, call2))
+        print("close put, put2: ", np.allclose(put, put2))
+        print("close call1, call2: ", np.allclose(call, call2))
