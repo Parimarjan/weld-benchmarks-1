@@ -41,7 +41,7 @@ def run_cmd(orig_cmd, name, remove_ops=0, add_ops=''):
 
         print('**********going to run********: ', cmd)
         process = sp.Popen(cmd, stdout=f, stderr=f)
-        # process = sp.Popen(cmd)
+        #process = sp.Popen(cmd)
         process.wait()
 	print("process over!")
         f.close()
@@ -73,7 +73,7 @@ def run_blackscholes_no_group(n, p, name, **kwargs):
     args = '-n {n} -ie 1 -g 0 -p {p}'.format(n=n, p=p)
     cmd = 'python {file} {args}'.format(file=f, args=args)
     cmd = cmd.split()
-    run_cmd(cmd, name, *kwargs)
+    run_cmd(cmd, name, **kwargs)
     os.chdir('..')
 
 def run_nbody(n, p, name, **kwargs):
@@ -82,7 +82,7 @@ def run_nbody(n, p, name, **kwargs):
     args = '-n {n} -t 1 -p {p}'.format(n=n, p=p)
     cmd = 'python {file} {args}'.format(file=f, args=args)
     cmd = cmd.split()
-    run_cmd(cmd, name, *kwargs)
+    run_cmd(cmd, name, **kwargs)
     os.chdir('..')
 
 def run_haversine(s, p, name, **kwargs):
@@ -91,7 +91,7 @@ def run_haversine(s, p, name, **kwargs):
     args = '-s {s} -g 0 -p {p}'.format(s=s, p=p)
     cmd = 'python {file} {args}'.format(file=f, args=args)
     cmd = cmd.split()
-    run_cmd(cmd, name, *kwargs)
+    run_cmd(cmd, name, **kwargs)
     os.chdir('..')
 
 def run_quasi(n, p, name, **kwargs):
@@ -147,19 +147,19 @@ if args.run_ablation:
 # gives it 50-60 secs as we want.
 HAVERSINE_SCALE = 200000 / args.d
 FILE_NAME = 'hs' 
-HAVERSINE_SUPPORTED_OPS = [np.subtract.__name__, np.divide.__name__, np.arcsin.__name__,
-        np.cos.__name__, np.add.__name__, np.sqrt.__name__, np.sin.__name__, np.multiply.__name__]
+HAVERSINE_SUPPORTED_OPS = [np.add.__name__,np.sqrt.__name__, np.arcsin.__name__,np.cos.__name__, 
+ np.divide.__name__, np.sin.__name__, np.subtract.__name__, np.multiply.__name__]
 
 #run_haversine(HAVERSINE_SCALE, 'All', FILE_NAME)
 
 if args.run_incremental:
     # first after removing all ops. 
-    run_haversine(HAVERSINE_SCALE, 'All', FILE_NAME, remove_ops=1, add_ops='')
+    run_haversine(HAVERSINE_SCALE, 'Whatever', FILE_NAME, remove_ops=1, add_ops='')
     ops = ''
     for i, op in enumerate(HAVERSINE_SUPPORTED_OPS):
         # keep building the ops string and run it.
         ops += op + ','
-        run_haversine(HAVERSINE_SCALE, 'All', FILE_NAME, remove_ops=1, add_ops=ops)
+        run_haversine(HAVERSINE_SCALE, 'Whatever', FILE_NAME, remove_ops=1, add_ops=ops)
 
 if args.run_ablation:
     run_haversine(HAVERSINE_SCALE, 'fusion', FILE_NAME)

@@ -29,6 +29,8 @@ def process_file(f):
         print('f = ', f)
         for line in fp:
             time = get_time_from_string(line)
+	    print(line)	
+	    print(time)
             if 'END' in line:
                 break 
             if 'param' in line:

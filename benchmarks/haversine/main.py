@@ -154,7 +154,7 @@ def run_haversine_with_scalar(args):
         else:
             dist2 = dist2.evaluate()
 	
-	print(np.sum(dist2))
+	#print(np.sum(dist2))
         end = time.time()
         print('****************************')
         print('weld took {} seconds'.format(end-start))
@@ -184,8 +184,8 @@ parser.add_argument('-remove_ops', type=int, required=False, default=0,
 parser.add_argument('-add_ops', type=str, required=False, default="", 
                     help="comma separated list of ops to add")
 
-
 args = parser.parse_args()
+process_weld_args(args)
 
 LATS_NAME = LATS_NAME + str(args.scale)
 LONS_NAME = LONS_NAME + str(args.scale)
