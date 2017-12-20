@@ -29,8 +29,6 @@ def process_file(f):
         print('f = ', f)
         for line in fp:
             time = get_time_from_string(line)
-	    print(line)	
-	    print(time)
             if 'END' in line:
                 break 
             if 'param' in line:
@@ -109,9 +107,7 @@ params = ''
 
 to_process = []
 for f in os.listdir(args.dir):
-    print(f)
     if args.file in f and '.txt' in f:
-        print f
         full_f = os.path.join(args.dir, f)
         to_process.append(full_f)
 

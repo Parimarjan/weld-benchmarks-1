@@ -133,7 +133,7 @@ if args.run_incremental:
     ops = ''
     for i, _ in enumerate(BLACKSCHOLES_SUPPORTED_OPS):
         # keep building the ops string and run it.
-        op = BLACKSCHOLES_SUPPORTED_OPS[len(BLACKSCHOLES_SUPPORTED_OPS) - i]
+        op = BLACKSCHOLES_SUPPORTED_OPS[len(BLACKSCHOLES_SUPPORTED_OPS) -1 -i]
         ops += op + ','
         run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops=ops)
 
@@ -159,7 +159,7 @@ if args.run_incremental:
     ops = ''
     for i, _ in enumerate(HAVERSINE_SUPPORTED_OPS):
         # keep building the ops string and run it.
-        op = HAVERSINE_SUPPORTED_OPS[len(HAVERSINE_SUPPORTED_OPS) - i]
+        op = HAVERSINE_SUPPORTED_OPS[len(HAVERSINE_SUPPORTED_OPS) -1 -i]
         ops += op + ','
         run_haversine(HAVERSINE_SCALE, 'Whatever', FILE_NAME, remove_ops=1, add_ops=ops)
 
