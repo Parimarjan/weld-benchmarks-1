@@ -129,9 +129,9 @@ def print_args(args):
 def process_weld_args(args):
     global USE_ERF
     wn.remove_pass(args.remove_pass)
-    USE_ERF = False
 
     if args.remove_ops:
+        USE_ERF = False
         wn.remove_all_ops()
         # now need to add stuff back in as needed.
         ops = args.add_ops.split(',')

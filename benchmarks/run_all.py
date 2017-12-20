@@ -129,12 +129,13 @@ FILE_NAME = 'bs'
 
 if args.run_incremental:
     # first after removing all ops. 
-    #run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops='')
+    run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops='')
     ops = ''
-    for i, op in enumerate(BLACKSCHOLES_SUPPORTED_OPS):
+    for i, _ in enumerate(BLACKSCHOLES_SUPPORTED_OPS):
         # keep building the ops string and run it.
+        op = BLACKSCHOLES_SUPPORTED_OPS[len(BLACKSCHOLES_SUPPORTED_OPS) - i]
         ops += op + ','
-        #run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops=ops)
+        run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops=ops)
 
 if args.run_ablation:
     run_blackscholes(BLACKSCHOLES_ARGS, 'fusion', FILE_NAME)
@@ -156,8 +157,9 @@ if args.run_incremental:
     # first after removing all ops. 
     run_haversine(HAVERSINE_SCALE, 'Whatever', FILE_NAME, remove_ops=1, add_ops='')
     ops = ''
-    for i, op in enumerate(HAVERSINE_SUPPORTED_OPS):
+    for i, _ in enumerate(HAVERSINE_SUPPORTED_OPS):
         # keep building the ops string and run it.
+        op = HAVERSINE_SUPPORTED_OPS[len(HAVERSINE_SUPPORTED_OPS) - i]
         ops += op + ','
         run_haversine(HAVERSINE_SCALE, 'Whatever', FILE_NAME, remove_ops=1, add_ops=ops)
 
