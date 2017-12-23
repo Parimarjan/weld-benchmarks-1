@@ -89,15 +89,15 @@ args = parser.parse_args()
 
 # ~100 seconds for numpy
 BLACKSCHOLES_ARGS = (10**8)*2 /args.d
-#run_blackscholes(BLACKSCHOLES_ARGS, 'whatever', 'blackscholes')
+run_blackscholes(BLACKSCHOLES_ARGS, 'whatever', 'blackscholes')
 
 # gives it 50-60 secs as we want.
 HAVERSINE_SCALE = 200000 / args.d
-run_haversine(HAVERSINE_SCALE, 'whatever', 'haversine')
+#run_haversine(HAVERSINE_SCALE, 'whatever', 'haversine')
 
 # Keeps it around ~70 seconds for numpy
 NBODY_ARGS = 20000 / args.d
-run_nbody(NBODY_ARGS, 'whatever', 'nbody')
+#run_nbody(NBODY_ARGS, 'whatever', 'nbody')
 
 PIXELS = 2048 / args.d
 #run_quasi(PIXELS, 'whatever', 'quasi')
