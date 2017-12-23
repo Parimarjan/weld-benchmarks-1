@@ -26,6 +26,7 @@ def run_cmd(orig_cmd, name, remove_ops=0, add_ops=''):
 	print("i = ", i)
         fname = name + str(i) + '.txt'
         f = open(fname, 'w')
+	print('opened file: ', fname)
         cmd = list(orig_cmd)
 	if use_numpy:
 		cmd.append('-numpy')
@@ -40,10 +41,10 @@ def run_cmd(orig_cmd, name, remove_ops=0, add_ops=''):
             cmd.append(add_ops)
 
         print('**********going to run********: ', cmd)
-        process = sp.Popen(cmd, stdout=f, stderr=f)
+        process = sp.Popen(cmd, stdout=f, stderr=sp.STDOUT)
         #process = sp.Popen(cmd)
         process.wait()
-	print("process over!")
+	f.flush()
         f.close()
     # Let's write stuff there first.
 
@@ -120,6 +121,7 @@ args = parser.parse_args()
 
 # ~100 seconds for numpy
 BLACKSCHOLES_ARGS = (10**8)*2 /args.d
+
 # TODO: erf.
 #BLACKSCHOLES_SUPPORTED_OPS = [np.sqrt.__name__, np.log.__name__, np.divide.__name__, np.exp.__name__, 'erf', np.add.__name__, np.subtract.__name__, np.multiply.__name__]
 BLACKSCHOLES_SUPPORTED_OPS = [np.subtract.__name__, np.exp.__name__, np.add.__name__, 'erf', np.divide.__name__, np.sqrt.__name__, np.log.__name__, np.multiply.__name__]
@@ -129,13 +131,13 @@ FILE_NAME = 'bs'
 
 if args.run_incremental:
     # first after removing all ops. 
-    run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops='')
+    #run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops='')
     ops = ''
     for i, _ in enumerate(BLACKSCHOLES_SUPPORTED_OPS):
         # keep building the ops string and run it.
         op = BLACKSCHOLES_SUPPORTED_OPS[len(BLACKSCHOLES_SUPPORTED_OPS) -1 -i]
         ops += op + ','
-        run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops=ops)
+        # run_blackscholes(BLACKSCHOLES_ARGS, 'All', FILE_NAME, remove_ops=1, add_ops=ops)
 
 if args.run_ablation:
     run_blackscholes(BLACKSCHOLES_ARGS, 'fusion', FILE_NAME)
@@ -148,8 +150,11 @@ if args.run_ablation:
 # gives it 50-60 secs as we want.
 HAVERSINE_SCALE = 200000 / args.d
 FILE_NAME = 'hs' 
-HAVERSINE_SUPPORTED_OPS = [np.add.__name__,np.sqrt.__name__, np.arcsin.__name__,np.cos.__name__, 
- np.divide.__name__, np.sin.__name__, np.subtract.__name__, np.multiply.__name__]
+#HAVERSINE_SUPPORTED_OPS = [np.add.__name__,np.sqrt.__name__, np.arcsin.__name__,np.cos.__name__, 
+# np.divide.__name__, np.sin.__name__, np.subtract.__name__, np.multiply.__name__]
+
+HAVERSINE_SUPPORTED_OPS = [np.sin.__name__, np.sqrt.__name__, np.arcsin.__name__,np.cos.__name__, 
+ np.add.__name__, np.subtract.__name__, np.divide.__name__, np.multiply.__name__]
 
 #run_haversine(HAVERSINE_SCALE, 'All', FILE_NAME)
 

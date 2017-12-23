@@ -184,5 +184,5 @@ if __name__ == '__main__':
     # Correctness check.
     if args.use_numpy and args.use_weld:
 	pass
-        print("close put, put2: ", np.allclose(put, put2))
-        print("close call1, call2: ", np.allclose(call, call2))
+        #print("close put, put2: ", np.allclose(put, put2))
+        #print("close call1, call2: ", np.allclose(call, call2))
