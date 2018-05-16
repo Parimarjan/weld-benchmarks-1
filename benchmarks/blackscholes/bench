@@ -25,7 +25,7 @@ def get_data(num_els):
     rate = np.float64(np.float64(0.01) + np.random.rand(num_els))
     # random volatility between 0 and 1
     vol = np.float64(np.float64(0.01) + np.random.rand(num_els))
- 
+
     print('***********Got Data*************')
     return price, strike, t, rate, vol
 
@@ -60,9 +60,9 @@ def blackscholes(price, strike, t, rate, vol, int_eval, use_group):
         # these are numpy arrays, so use scipy's erf function
         d1 = c05 + c05 * ss.erf(d1 * invsqrt2)
         d2 = c05 + c05 * ss.erf(d2 * invsqrt2)
-    
+
     # e_rt = np.exp((-rate) * t)
-    e_rt = np.exp((rate) * t)
+    e_rt = np.exp((0.0-rate) * t)
 
     if isinstance(price, weldarray) and int_eval:
         price = price.evaluate()
@@ -73,9 +73,7 @@ def blackscholes(price, strike, t, rate, vol, int_eval, use_group):
 
     # CORRECT ONE:
     call = (price * d1) - (e_rt * strike * d2)
-    #call = price * d1 + e_rt * strike * d2
     put = e_rt * strike * (c10 - d2) - price * (c10 - d1)
-    #put = e_rt * strike * (c10 + d2) + price * (c10 + d1)
 
     if isinstance(call, weldarray) and use_group:
         lazy_ops = generate_lazy_op_list([call, put])
@@ -87,7 +85,7 @@ def blackscholes(price, strike, t, rate, vol, int_eval, use_group):
     if isinstance(call, weldarray) and not use_group:
         call = call.evaluate()
         put = put.evaluate()
-    
+
     return call, put
 
 def generate_lazy_op_list(arrays):
@@ -99,7 +97,7 @@ def generate_lazy_op_list(arrays):
 
 def run_blackscholes(args, use_weld):
     p, s, t, r, v = get_data(args.num_els)
-    
+
     if use_weld:
         p = weldarray(p)
         s = weldarray(s)
@@ -149,17 +147,17 @@ if __name__ == '__main__':
                         help="num_els of 1d arrays")
     parser.add_argument('-ie', "--int_eval", type=int, required=True,
                         help="num_els of 1d arrays")
-    parser.add_argument('-g', "--use_group", type=int, 
+    parser.add_argument('-g', "--use_group", type=int,
                         default=1, help="num_els of 1d arrays")
-    parser.add_argument('-p', "--remove_pass", type=str, 
+    parser.add_argument('-p', "--remove_pass", type=str,
                         default="whatever_string", help="will remove the pass containing this str")
     parser.add_argument('-numpy', "--use_numpy", type=int, required=False, default=0,
                         help="use numpy or not in this run")
     parser.add_argument('-weld', "--use_weld", type=int, required=False, default=0,
                         help="use weld or not in this run")
-    parser.add_argument('-remove_ops', type=int, required=False, default=0, 
+    parser.add_argument('-remove_ops', type=int, required=False, default=0,
                         help="remove supported weld ops")
-    parser.add_argument('-add_ops', type=str, required=False, default="", 
+    parser.add_argument('-add_ops', type=str, required=False, default="",
                         help="comma separated list of ops to add")
 
     args = parser.parse_args()
@@ -180,9 +178,18 @@ if __name__ == '__main__':
         print('END!')   # So we can stop computing weld timings and stuff
     else:
         print('Not running weld')
-    
+
     # Correctness check.
     if args.use_numpy and args.use_weld:
-	pass
-        #print("close put, put2: ", np.allclose(put, put2))
-        #print("close call1, call2: ", np.allclose(call, call2))
+        print("close put, put2: ", np.allclose(put, put2))
+        print("close call1, call2: ", np.allclose(call, call2))
+
+        # as we find out, they are only slightly different.
+        mistakes = 0
+        for i in range(len(call2)):
+            if (put[i] - put2[i] > 5.00):
+            # if (call[i] != call2[i]):
+                mistakes += 1
+                # print('call: ', call[i])
+                # print('call2: ', call2[i])
+        print("mistakes: ", mistakes)
